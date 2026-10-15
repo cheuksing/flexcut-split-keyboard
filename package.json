@@ -4,11 +4,21 @@
   "version": "0.1.0",
   "description": "Solder-only Ergogen switch footprints with per-key flex cuts",
   "scripts": {
-    "build": "node scripts/build-footprints.js",
-    "test": "node --test tests/footprints.test.js",
+    "dev": "node scripts/serve-ergogen.js",
+    "test:web": "node --test tests/ergogen-web.test.js",
+    "build": "node scripts/build-footprints.js && npm run build:keyboard",
+    "build:keyboard": "node scripts/build-keyboard.js",
+    "test": "node --test tests/*.test.js",
     "check": "node scripts/invalidate-verification.js && npm run build && npm test && npm run manufacturing",
     "manufacturing": "node scripts/check-manufacturing.js",
-    "review": "npm run check && node scripts/build-review.js"
+    "review": "npm run check && node scripts/build-review.js && node scripts/build-keyboard-review.js"
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "2.6.2",
+    "ergogen": "4.2.1",
+    "linkedom": "0.18.12"
+  }
 }

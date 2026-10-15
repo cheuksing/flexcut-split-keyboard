@@ -25,6 +25,18 @@
     "island_neck_width_guard_mm": 1.96,
     "shared_rail_min_mm": 2.60,
     "shared_rail_adverse_stack_min_mm": 2.20,
-    "gasket_edge_clearance_mm": 0.30
+    "gasket_edge_clearance_mm": 0.30,
+    "gasket_window_closing_radius_mm": 1.0,
+    "gasket_unrelieved_web_min_mm": 2.0,
+    "rib_edge_clearance_mm": 0.50,
+    "component_relief_clearance_mm": 0.30,
+    "component_courtyard_to_route_min_mm": 0.20,
+    "support_trim_lobe_area_max_mm2": 3.0
+  },
+  "keyboard": {
+    "columns": 5,
+    "rows": 4,
+    "scan_gpio_per_half": 5,
+    "cumulative_stagger_mm": [0, 3, 8, 3, 0]
   }
 }

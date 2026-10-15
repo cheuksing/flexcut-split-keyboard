@@ -90,12 +90,12 @@ With an Ergogen CLI installed:
 ergogen ergogen -o build/ergogen
 ```
 
-`ergogen/config.yaml` is only a review fixture. It defines three independent,
-unrouted single-key coupons using synthetic review nets; it is not the future
-keyboard or its schematic. Its 27.05 mm outline provides a nominal 6 mm outside
-rail relative to the study's standard opening. Set board thickness to **1.2 mm**
-in KiCad before evaluating flex: Ergogen's stock KiCad 8 template defaults to
-1.6 mm, and footprints cannot set PCB stackup.
+`ergogen/config.yaml` now defines the actual 5×4 Choc keyboard half. The original
+three-coupon fixture is preserved in `ergogen/fixtures/footprint-review.yaml`.
+Its 27.05 mm outline is a separate illustration, not the keyboard perimeter.
+Use `npm run build:keyboard` for the keyboard CAD: the runner sets **1.2 mm**
+thickness. Ergogen's stock KiCad 8 CLI template defaults to 1.6 mm; a footprint
+alone cannot set stackup. See [keyboard.md](keyboard.md) for the current matrix.
 
 For the future layout, a footprint declaration can be:
 
@@ -112,7 +112,8 @@ pcbs:
           to: "{{switch_net}}"
 ```
 
-Those net attributes are placeholders to define when designing the schematic.
+Those net attributes are generic placeholders. The actual Choc matrix now uses
+`scan_from` and a per-key `K_COLx_ROWy` net; see [keyboard.md](keyboard.md).
 If moving the footprint files into a named subdirectory of `footprints/`, prefix
 `what` with that directory name.
 
@@ -133,8 +134,9 @@ avoid vias, joints and component bodies on the beams.
 
 ## Validation performed
 
-`npm run check` rebuilds all three modules and runs eight Node tests without Node
-dependencies, then the mandatory Python/Shapely manufacturing gate. Checks cover
+`npm run check` rebuilds all three modules and the keyboard, runs the footprint
+and matrix connectivity tests, then the mandatory Python/Shapely manufacturing gate.
+The keyboard runner uses pinned Ergogen; review PNG rendering uses pinned resvg. Checks cover
 the Ergogen bundle loading contract, escaped references,
 required nets, pin/net mapping, pad layers and drills, unconnected plated support,
 placement at 0°, 37°, 90° and 180°, drawing toggles, two exactly closed cut loops,
@@ -163,9 +165,10 @@ regression checks, not a fabrication certification.
 
 ## Pending native and hardware checks
 
-The CLI fixture has **not** been executed by Ergogen, and no native KiCad
-load/save, DRC or Gerber/drill export has been performed. The review page is
-generated from parsed footprint expressions, not a native KiCad render.
+The historical single-key CLI fixture has **not** been executed by Ergogen.
+The new 5×4 keyboard configuration **has** been run through pinned Ergogen
+4.2.1. No native KiCad load/save, ERC/DRC or Gerber/drill export has been performed.
+Review drawings are generated offline from emitted CAD, not a native KiCad render.
 
 Before fabrication, load the standalone footprints and generated coupons in the
 target KiCad version, save/reopen, and inspect front/back copper separately. Verify

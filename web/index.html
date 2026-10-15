@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Local Ergogen editor and preview for the Choc split keyboard.">
+  <title>Ergogen · Keyboard design</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">⌘</span><div><h1>Ergogen <span>/ Keyboard design</span></h1><p>Local layout workbench</p></div></div>
+    <div class="header-actions"><span id="engine-version" class="version">Loading engine…</span><a href="/checked/" target="_blank" rel="noopener">Checked matrix review ↗</a></div>
+  </header>
+  <main>
+    <section class="editor-panel" aria-labelledby="editor-title">
+      <div class="panel-heading"><div><h2 id="editor-title">Configuration</h2><p>ergogen/config.yaml</p></div><button id="reload-project" class="quiet" type="button">Reload project</button></div>
+      <label class="sr-only" for="config">Ergogen YAML configuration</label>
+      <textarea id="config" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-describedby="editor-hint" placeholder="Loading your keyboard configuration…"></textarea>
+      <div class="editor-meta"><span id="editor-hint">Draft only · project file unchanged</span><span id="line-count">0 lines</span></div>
+      <div class="editor-actions"><label class="auto-label"><input id="auto-preview" type="checkbox" checked> Auto preview</label><span class="shortcut">⌘ / Ctrl + Enter</span><button id="generate" class="primary" type="button" disabled>Generate preview <span aria-hidden="true">→</span></button></div>
+      <div id="error-panel" class="error-panel" role="alert" hidden><strong>Couldn’t generate this draft</strong><pre id="error-message"></pre></div>
+      <details class="console"><summary>Generator log</summary><pre id="generator-log">Waiting for the first preview.</pre></details>
+    </section>
+    <section class="preview-panel" aria-labelledby="preview-title">
+      <div class="panel-heading preview-heading"><div><h2 id="preview-title">Preview</h2><p id="preview-caption">Your generated Ergogen result</p></div><span id="status" class="status" role="status" aria-live="polite" data-state="loading">Loading project</span></div>
+      <div class="preview-toolbar"><label for="view-select">View</label><select id="view-select" disabled><option>Waiting for output</option></select><div class="zoom-controls"><button id="zoom-out" type="button" aria-label="Zoom out">−</button><output id="zoom-level" aria-label="Zoom level">100%</output><button id="zoom-in" type="button" aria-label="Zoom in">+</button><button id="fit-view" type="button">Fit</button></div></div>
+      <div id="viewport" class="viewport" tabindex="0" aria-label="Generated preview. Drag to pan, scroll or use plus and minus to zoom; press zero to fit.">
+        <div class="image-frame"><img id="preview-image" alt="Generated keyboard preview" draggable="false" hidden></div>
+        <div id="empty-preview" class="empty-preview"><span aria-hidden="true">⌑</span><p>Generate a preview to explore your layout.</p></div>
+        <div id="stale-note" class="stale-note" hidden>Showing the last generated result · draft has changed</div>
+        <span class="canvas-hint">Drag to pan · scroll to zoom</span>
+      </div>
+      <div class="metrics" aria-label="Preview details"><div><span>Key positions</span><strong id="key-count">—</strong></div><div><span>PCB extent</span><strong id="pcb-size">—</strong></div><div><span>Footprints</span><strong id="footprint-count">—</strong></div><div><span>Board thickness</span><strong id="board-thickness">—</strong></div></div>
+      <div class="downloads"><label for="download-select">Output</label><select id="download-select" disabled><option>No output yet</option></select><button id="download-output" type="button" disabled>Download output ↓</button><button id="download-config" type="button" disabled>Save YAML ↓</button></div>
+      <p class="preview-note">Custom Choc flex cuts and bottom solder pads are included. KiCad 8 boards use the project’s 1.2 mm template. <strong>Draft previews are unverified.</strong> Saved design changes need <code>npm run review</code>.</p>
+      <details class="points-details"><summary>Inspect key coordinates</summary><div class="table-scroll"><table><thead><tr><th>Key</th><th>X (mm)</th><th>Y (mm)</th><th>Rotation</th><th>Sense → sink</th></tr></thead><tbody id="point-rows"></tbody></table></div><p>Point coordinates use Ergogen’s +Y-up convention. PCB coordinates use +Y down.</p></details>
+    </section>
+  </main>
+  <footer><span>Runs on your computer · no external services</span><span>Geometry preview · native KiCad and electrical checks remain separate</span></footer>
+</body>
+</html>

@@ -1,62 +1,100 @@
-# Footprint review fixture only. This is not the keyboard layout or schematic.
-# Run the whole folder so Ergogen loads footprints/: ergogen ergogen -o build/ergogen
+# One identical half PCB, used twice without flipping. Rows go bottom to top.
+# COL*/ROW* are placement metadata; only P0..P4 are electrical scan nets.
 meta:
-  engine: 4.1.0
-  version: "0.1.0"
-
+  engine: 4.2.1
+  version: "0.2.0"
+units:
+  pitch: 19.05
+  outer_margin: 4
+  stagger_height: 8
 points:
+  key:
+    spread: pitch
+    padding: pitch
   zones:
-    review:
+    matrix:
       anchor:
-        shift: [100, -100]
+        shift: [60, -120]
       columns:
-        key:
+        pinky:
+          key.column_net: COL0
+          key.scan_from: P0
+          rows:
+            r3.scan_to: P1
+            r2.scan_to: P2
+            r1.scan_to: P3
+            r0.scan_to: P4
+        ring:
+          key.stagger: 3
+          key.column_net: COL1
+          key.scan_from: P1
+          rows:
+            r3.scan_to: P2
+            r2.scan_to: P3
+            r1.scan_to: P4
+            r0.scan_to: P0
+        middle:
+          key.stagger: 5
+          key.column_net: COL2
+          key.scan_from: P2
+          rows:
+            r3.scan_to: P3
+            r2.scan_to: P4
+            r1.scan_to: P0
+            r0.scan_to: P1
+        index:
+          key.stagger: -5
+          key.column_net: COL3
+          key.scan_from: P3
+          rows:
+            r3.scan_to: P4
+            r2.scan_to: P0
+            r1.scan_to: P1
+            r0.scan_to: P2
+        inner:
+          key.stagger: -3
+          key.column_net: COL4
+          key.scan_from: P4
+          rows:
+            r3.scan_to: P0
+            r2.scan_to: P1
+            r1.scan_to: P2
+            r0.scan_to: P3
       rows:
-        only:
-
-# One independent review coupon per switch. The 27.05 mm square keeps
-# 6 mm between the nominal routed opening and the external edge.
+        r3:
+          row_net: ROW3
+        r2:
+          row_net: ROW2
+        r1:
+          row_net: ROW1
+        r0:
+          row_net: ROW0
 outlines:
-  coupon:
+  half:
     - what: rectangle
-      where: true
-      size: [27.05, 27.05]
-      fillet: 1.2
-
+      where:
+        ref: matrix_middle_r2
+        shift: [0, pitch / 2 - stagger_height / 2]
+      size: [5 * pitch + 2 * outer_margin, 4 * pitch + stagger_height + 2 * outer_margin]
+      fillet: 2
 pcbs:
-  ks33_review:
+  choc5x4_half:
     template: kicad8
     outlines:
-      - outline: coupon
+      - outline: half
     footprints:
-      switch:
-        what: ks33
-        where: true
-        params:
-          from: REVIEW_FROM
-          to: REVIEW_TO
-          show_cell: true
-  choc_review:
-    template: kicad8
-    outlines:
-      - outline: coupon
-    footprints:
-      switch:
+      switches:
         what: choc
         where: true
         params:
-          from: REVIEW_FROM
-          to: REVIEW_TO
-          show_cell: true
-  mx_review:
-    template: kicad8
-    outlines:
-      - outline: coupon
-    footprints:
-      switch:
-        what: mx
+          from: "{{scan_from}}"
+          to: "K_{{column_net}}_{{row_net}}"
+      diodes:
+        what: diode_sod123
         where: true
+        # Stationary horizontal rail, away from moving island and beams.
+        adjust:
+          shift: [5, -pitch / 2]
         params:
-          from: REVIEW_FROM
-          to: REVIEW_TO
-          show_cell: true
+          anode: "K_{{column_net}}_{{row_net}}"
+          cathode: "{{scan_to}}"
