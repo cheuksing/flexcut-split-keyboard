@@ -66,7 +66,7 @@ function pcbPreview(text) {
       const [px,py]=numbers(p,'at'),[w,h]=numbers(p,'size');
       const layers=child(p,'layers')?.slice(1)||[];
       if(p[2]!=='np_thru_hole') {
-        svg+=rect(px,py,w,h,layers.includes('B.Cu')?'#d9252a':'#26775f',p[3]==='rect'?0:Math.min(w,h)/2); pads++;
+        svg+=rect(px,py,w,h,layers.includes('B.Cu')?'#2563eb':'#d9252a',p[3]==='rect'?0:Math.min(w,h)/2); pads++;
       }
       const drill=child(p,'drill');
       if(drill) {

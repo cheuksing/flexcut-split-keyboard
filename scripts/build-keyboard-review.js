@@ -24,7 +24,7 @@ function board() {
     for(const c of f.cuts) s+=polygon(c,'#000');
     for(const p of f.pads) {
       const [x,y]=p.at,[w,h]=p.size;
-      if(p.type!=='np_thru_hole') s+=p.shape==='rect'?`<rect x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" fill="#d9252a"/>`:capsule(x,y,w,h,'#d9252a');
+      if(p.type!=='np_thru_hole') s+=p.shape==='rect'?`<rect x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" fill="#2563eb"/>`:capsule(x,y,w,h,'#2563eb');
       if(p.drill) {const [dw,dh]=p.drill.length===2?p.drill:[p.drill[0],p.drill[0]];s+=capsule(x,y,dw,dh,'#000');}
     }
   }
@@ -51,7 +51,7 @@ for(let hand=0;hand<2;hand++) {
   const names=hand?['inner','index','middle','ring','pinky']:['pinky','ring','middle','index','inner'];
   for(let c=0;c<5;c++) layout+=txt(names[c],ox+60+c*19.05-minX,34,2.1,'#95aebc');
   layout+=`<g transform="translate(${ox-minX} ${oy-minY})">${board()}</g>`;
-  layout+=txt('103.25 × 92.20 mm · cutouts black · B.Cu shown red through board',ox+width/2,136,2,'#95aebc');
+  layout+=txt('103.25 × 92.20 mm · cutouts black · B.Cu shown blue through board',ox+width/2,136,2,'#95aebc');
 }
 layout+=txt('r0 top / r3 bottom · cumulative stagger 0, +3, +8, +3, 0 mm',130,144,2.5);
 layout+=txt('UNROUTED MATRIX REVIEW · adapter and controller deferred · rollover / native ERC & DRC pending',130,152,2.4,'#ffcc8f');
@@ -99,7 +99,7 @@ const html=`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="vie
 <main><h1>Choc 5×4 · one identical half</h1><p>Use two copies component-side up. ${k.keys} switches and 20 bottom-side SOD-123 diodes per half; five scan nets. Right-hand anatomical columns reverse in firmware or the later adapter.</p>
 <p class="status">PASS WITH OPEN REVIEWS — geometry and parsed schematic connectivity only. Unrouted; native KiCad ERC/DRC, charlieplex multi-key electrical margins, complete case and adapter remain open.</p>
 <nav><a href="#layout">Layout</a><a href="#matrix">Circuit</a><a href="#support">Support concept</a><a href="choc5x4_half.kicad_pcb">KiCad PCB</a><a href="choc5x4_half.kicad_sch">KiCad schematic</a><a href="matrix.csv">Net map CSV</a><a href="../review/index.html">Footprints</a></nav>
-<section id="layout"><h2>Same PCB for either hand</h2><img src="layout.svg" alt="Two identical 5 by 4 PCBs with symmetric cumulative staggers"><p>Rows follow the supplied Ergogen order: r3 bottom, r0 top. Blue dashes are 15 mm switch-body guides; they are not plate cuts. The red copper is on the underside and shown here to review clearances. Individual Choc pin and cut patterns keep their orientation.</p></section>
+<section id="layout"><h2>Same PCB for either hand</h2><img src="layout.svg" alt="Two identical 5 by 4 PCBs with symmetric cumulative staggers"><p>Rows follow the supplied Ergogen order: r3 bottom, r0 top. Dashed outlines are 15 mm switch-body guides; they are not plate cuts. The blue copper is on the underside and shown here to review clearances. Individual Choc pin and cut patterns keep their orientation.</p></section>
 <section id="matrix"><h2>Twenty directed pairs</h2><img src="matrix.svg" alt="Every switch and diode connected between a distinct ordered pair of P0 through P4"><p>Only P0–P4 are electrical scan lines. One line is driven low at a time; the other lines are pulled-up inputs. Release the previous sink before selecting another. This is a circuit review, not tested firmware. Series diodes alone do not prove rollover: P0→P1 plus P1→P2 can appear as P0→P2. Controller and diode selection need voltage-margin and multi-key tests.</p></section>
 <section><h2>Measured geometry</h2><table><tr><th>Half outline</th><td>${k.width_mm.toFixed(2)} × ${k.height_mm.toFixed(2)} mm</td></tr><tr><th>Nominal thickness</th><td>1.2 mm</td></tr><tr><th>Minimum stationary rail</th><td>${k.min_shared_rail_mm.toFixed(3)} mm</td></tr><tr><th>Adverse rail screen</th><td>${k.shared_rail_adverse_stack_mm.toFixed(3)} mm</td></tr><tr><th>Upper gasket web before trimming</th><td>${k.min_gasket_web_before_component_reliefs_mm.toFixed(3)} mm</td></tr></table><p>Width exceeds 100 mm; no promotional price is confirmed. Input SHA-256: <code>${check.input_sha256}</code>.</p></section>
 <section id="support"><h2>Support sheets follow the new stationary grid</h2><img src="supports.svg" alt="Upper and lower continuous gasket and rib concepts with moving-system exclusions"><p>Lower plans include diode-body relief. Small unsupported tongues are deliberately cut away after the 1.30 mm opening screen; omitted areas are recorded in the verification report. These 2D concepts do not define materials, mount holes, clamp nodes, case heights, hard stops or compression. Reduced lower support coverage needs mechanical review.</p></section>

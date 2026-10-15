@@ -34,7 +34,7 @@
       </div>
       <div class="metrics" aria-label="Preview details"><div><span>Key positions</span><strong id="key-count">—</strong></div><div><span>PCB extent</span><strong id="pcb-size">—</strong></div><div><span>Footprints</span><strong id="footprint-count">—</strong></div><div><span>Board thickness</span><strong id="board-thickness">—</strong></div></div>
       <div class="downloads"><label for="download-select">Output</label><select id="download-select" disabled><option>No output yet</option></select><button id="download-output" type="button" disabled>Download output ↓</button><button id="download-config" type="button" disabled>Save YAML ↓</button></div>
-      <p class="preview-note">Custom Choc flex cuts and bottom solder pads are included. KiCad 8 boards use the project’s 1.2 mm template. <strong>Draft previews are unverified.</strong> Saved design changes need <code>npm run review</code>.</p>
+      <p class="preview-note">Custom Choc flex cuts are included; blue pads show bottom-layer copper. KiCad 8 boards use the project’s 1.2 mm template. <strong>Draft previews are unverified.</strong> Saved design changes need <code>npm run review</code>.</p>
       <details class="points-details"><summary>Inspect key coordinates</summary><div class="table-scroll"><table><thead><tr><th>Key</th><th>X (mm)</th><th>Y (mm)</th><th>Rotation</th><th>Sense → sink</th></tr></thead><tbody id="point-rows"></tbody></table></div><p>Point coordinates use Ergogen’s +Y-up convention. PCB coordinates use +Y down.</p></details>
     </section>
   </main>

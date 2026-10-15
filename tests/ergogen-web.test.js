@@ -45,7 +45,7 @@ test('real Ergogen generation includes custom Choc flex cuts, five-net pads and 
   assert.equal(result.pcbs[0].widthMm,103.25);assert.equal(result.pcbs[0].heightMm,92.2);
   for(const id of ['points','points-dxf','outline:half','outline-dxf:half','pcb:choc5x4_half','pcb-svg:choc5x4_half','points-json']) assert(result.assets.some(a=>a.id===id));
   const pcb=result.assets.find(a=>a.id==='pcb:choc5x4_half');
-  assert.match(pcb.svg,/A /);assert.match(pcb.svg,/#d9252a/);assert.match(pcb.svg,/SW20/);
+  assert.match(pcb.svg,/A /);assert.match(pcb.svg,/#2563eb/);assert.match(pcb.svg,/SW20/);
   const switches=children(parse(pcb.content),'footprint').filter(f=>f[1]==='keyboard-design:choc');
   assert.equal(switches.length,20);
   for(const sw of switches) {
