@@ -23,7 +23,7 @@ function cutPaths(edges) {
       d += `A ${arc.radius} ${arc.radius} 0 ${Math.abs(arc.sweep) > Math.PI ? 1 : 0} ${arc.sweep > 0 ? 1 : 0} ${xy(edge.end)} `;
     }
     if (edge.end.every((v, i) => v === start[i])) {
-      paths.push(`<path d="${d}Z" fill="#18202a" stroke="#e5eaf0" stroke-width=".035"/>`);
+      paths.push(`<path d="${d}Z" fill="#000000"/>`);
       d = '';
     }
   }
@@ -47,10 +47,10 @@ function draw(tree) {
     const [x, y] = numbers(pad, 'at'), [w, h] = numbers(pad, 'size');
     const drill = child(pad, 'drill');
     if (pad[2] === 'thru_hole') {
-      graphics.push(`<rect class="copper" x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="${w / 2}" fill="#b93640"/>`);
+      graphics.push(`<rect class="copper" x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="${w / 2}" fill="#d9252a"/>`);
     }
     const [dw, dh] = drill[1] === 'oval' ? drill.slice(2).map(Number) : [Number(drill[1]), Number(drill[1])];
-    graphics.push(`<rect x="${x - dw / 2}" y="${y - dh / 2}" width="${dw}" height="${dh}" rx="${dw / 2}" fill="#18202a"/>`);
+    graphics.push(`<rect x="${x - dw / 2}" y="${y - dh / 2}" width="${dw}" height="${dh}" rx="${dw / 2}" fill="#000000"/>`);
     if (pad[1]) graphics.push(`<text class="pin" x="${x}" y="${y + 0.22}" text-anchor="middle" font-size=".65" fill="white">${pad[1]}</text>`);
   }
   return `<svg viewBox="-14 -14 28 28" role="img" aria-label="Footprint top view with bottom copper visible"><g class="physical">${graphics.join('\n')}</g></svg>`;
@@ -75,8 +75,18 @@ const cards = specs.map(spec => {
     <p>${htmlEscape(spec.note)}</p><p>Center hole: ${spec.center} mm · signal pads: Ø2.30 / drill Ø${spec.drill} mm</p>
     <a href="SwitchFlex.pretty/${spec.id}.kicad_mod">KiCad footprint</a> · <a href="../../ergogen/footprints/${spec.id}.js">Ergogen source</a>
     <table><thead><tr><th>Pad</th><th>X (mm)</th><th>Y (mm)</th><th>Net parameter</th></tr></thead><tbody>${spec.pins.map(pin => `<tr><td>${pin.number}</td><td>${pin.x}</td><td>${pin.y}</td><td>${pin.number === '1' ? 'from' : 'to'}</td></tr>`).join('')}
-    ${spec.support ? '<tr><td>Support</td><td>-5</td><td>5.15</td><td>Unconnected</td></tr>' : ''}</tbody></table></article>`;
+    ${spec.holes.map(h => `<tr><td>Locator Ø${h.diameter} NPTH</td><td>${h.x}</td><td>${h.y}</td><td>None</td></tr>`).join('')}
+    ${spec.support ? '<tr><td>V2 solder support</td><td>-5</td><td>5.15</td><td>Unconnected</td></tr>' : ''}</tbody></table></article>`;
 });
+
+// Show the Choc changes repeated at the real pitch: opposing V1 locator
+// scallops reduce a shared rail from 4.0 mm to approximately 2.65 mm.
+const choc = require(path.join(root, 'ergogen/footprints/choc.js'));
+const chocDrawing = draw(parse(choc.body(parameters(choc))));
+const chocCell = chocDrawing.split('<g class="physical">')[1].split('</g>')[0]
+  .replace(/<rect x="-13\.525"[^>]+\/>/, '');
+const matrix = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-34 -34 68 68" width="850" height="850" role="img" aria-label="Three by three Choc V1 V2 PCB; black cutouts; red solder pads"><defs><g id="choc-key">${chocCell}</g></defs><rect x="-32.575" y="-32.575" width="65.15" height="65.15" rx="1.2" fill="#c9b77a"/>${[-19.05,0,19.05].flatMap(y => [-19.05,0,19.05].map(x => `<use href="#choc-key" transform="translate(${x} ${y})"/>`)).join('')}</svg>`;
+fs.writeFileSync(path.join(output, 'choc-3x3.svg'), matrix);
 
 const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Switch footprint review</title>
 <style>
@@ -86,7 +96,8 @@ const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="v
 <p class="status">Review artifacts only. No schematic or keyboard has been designed. Automated source/geometry checks run separately with <code>npm test</code>; native KiCad loading, Gerber/drill exports and physical fit still require verification.</p></header>
 <div class="controls"><label>View <select id="view"><option value="xray">Top view, bottom copper visible</option><option value="front">Front copper only</option><option value="bottom">Bottom view (mirrored)</option></select></label><label><input id="envelope" type="checkbox" checked> Show body envelope</label></div>
 <div class="legend"><span><i class="dot" style="background:#c9b77a"></i>Retained FR-4</span><span><i class="dot" style="background:#18202a;border:1px solid white"></i>Routed cuts / holes</span><span><i class="dot" style="background:#b93640"></i>B.Cu solder pads</span><span>Dashed square: 19.05 mm cell</span></div>
-<main>${cards.join('\n')}</main><p>Choc V2 support: 2.4 × 2.9 mm bottom copper capsule, 1.5 × 2.0 mm plated slot, no pad number or net. Copper is on B.Cu/B.Mask only; no F.Cu annular pads and no solder paste apertures.</p>
+<main>${cards.join('\n')}</main><p>Choc V1: two Ø1.90 mm unplated locating holes at (±5.5, 0), retained on the moving island. Choc V2 support: 2.4 × 3.9 mm bottom copper capsule, 1.5 × 3.0 mm plated slot, no pad number or net. Copper is on B.Cu/B.Mask only; no F.Cu annular pads and no solder paste apertures.</p>
+<h2>Choc V1 / V2 at 19.05 mm pitch</h2><div style="max-width:750px">${matrix}</div><p>65.15 × 65.15 mm 3×3 coupon. Facing V1 hole lobes leave approximately 2.65 mm of stationary shared rail. Follow the scalloped rails with rigid case ribs and relieved one-piece gasket webs; retain 0.30 mm clearance from each cut edge, giving approximately 2.05 mm gasket web at the narrowest section.</p>
 <p>Nominal study geometry: 1.35 mm beams, 1.20 mm routed channels, 2.0 mm half-rails, approximately 0.40 mm copper-to-route clearance. Envelope guides are non-fabricating body bounds, not plate openings. The outer square is a review coupon illustration, not part of the switch footprint.</p>
 <script>document.querySelector('#view').addEventListener('change',e=>{document.body.classList.remove('front','bottom');if(e.target.value!=='xray')document.body.classList.add(e.target.value)});document.querySelector('#envelope').addEventListener('change',e=>document.body.classList.toggle('no-envelope',!e.target.checked));</script></body></html>`;
 fs.writeFileSync(path.join(output, 'index.html'), html);

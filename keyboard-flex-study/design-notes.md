@@ -1,5 +1,10 @@
 # Per-key keyboard PCB flex cuts
 
+All manufacturing, physical, compatibility and assembly findings are maintained
+in [the constraint register](../docs/manufacturing-limitations.md). Run
+`npm run check` after every design revision; the exact-input results are in
+[the verification report](../docs/manufacturing-verification.md).
+
 ## Recommended construction
 
 - Use 1.2 mm, two-layer FR-4.
@@ -31,16 +36,28 @@ Two diagonal folded beams fit around these features. Pad 1 and pad 2 receive ful
 
 ### Kailh Choc V1 / V2
 
-The combined footprint uses the Choc V2 center opening and the common electrical pin positions:
+The combined PG1350 / PG1353 footprint now includes both V1 locating posts and the separate V2 metal support. Coordinates are component-side, +X right and +Y down:
 
-- Main opening: 5.1 mm diameter at (0, 0)
-- Solderable support slot: approximately 1.5 × 2.0 mm plated slot at (−5.0, 5.15), inside a 2.5 × 3.0 mm copper pad
-- Pad 1: (5.0, −3.8), 2.30 mm pad, 1.45 mm drill
-- Pad 2: (0, −6.0), 2.30 mm pad, 1.45 mm drill
+| Feature | X | Y | Finished hole / slot | Copper |
+| --- | ---: | ---: | --- | --- |
+| Common center NPTH | 0 | 0 | Ø5.10 mm, sized for V2 | None |
+| V1 left plastic locating post | -5.50 | 0 | Ø1.90 mm NPTH | None |
+| V1 right plastic locating post | 5.50 | 0 | Ø1.90 mm NPTH | None |
+| Electrical pad 1 | 5.00 | -3.80 | Ø1.45 mm plated | Ø2.30 mm, bottom only |
+| Electrical pad 2 | 0 | -5.90 | Ø1.45 mm plated | Ø2.30 mm, bottom only |
+| V2 solderable mechanical support | -5.00 | 5.15 | 1.50 × 3.00 mm plated capsule slot | 2.40 × 3.90 mm bottom capsule; no number/net |
 
-Pad 2 is the limiting feature. Its 1.20 mm routed moat makes a local notch in one side of the 4.0 mm shared rail. With every switch kept in the same rotation, only one side of a boundary is notched and approximately 2.775 mm of shared rail remains. The support slot is a mechanical plated-through pad so the pin can be soldered, but it remains electrically unconnected. Give it a 2.5 × 3.0 mm oval copper pad, a 1.5 × 2.0 mm plated slot, and approximately 0.5 mm copper annular ring. The retained PCB lobe is about 3.32 × 3.82 mm, leaving at least 0.40 mm nominal copper-to-route clearance. Blend all three solderable lobes into one island contour with rounded 2.0 mm minimum necks; do not leave primitive-intersection cusps beside the lobes. Confirm the support-pin pattern of the exact Choc SKU before ordering.
+The two V1 holes are plastic-post holes, not solder pads. They must be drilled through retained moving PCB. Each has a Ø3.00 mm retained lobe, leaving about 0.55 mm radial FR-4 to the cut; each lobe joins the center island through a 2.0 mm neck with smooth fillets. Both electrical pads and the V2 support pad move with the same island. The 5.10 mm center opening clears V2's larger boss and consequently provides a loose center fit for V1; V1's side posts and soldered terminals locate it.
 
-In KiCad, implement the support feature as a through-hole pad with an oval plated drill and an empty pad number. Enable copper on both outer layers but assign no net and place no trace to it. Do not draw this plated slot on `Edge.Cuts`; it belongs in the plated drill output.
+Kailh's V1 drawing specifies the electrical pad at (0, -5.90), not the earlier study's -6.00. The corrected combined pattern uses -5.90. The drawing identifies Ø1.90 mm V1 post holes 11.0 mm apart. V2 has no matching plastic posts; those two NPTHs are simply unused for V2.
+
+The V2 plated slot was lengthened from 2.0 to 3.0 mm because JLCPCB currently specifies plated slot length at least twice its width. Its position still encompasses the earlier 1.5 × 2.0 mm support aperture. The bottom copper pad has a 0.45 mm annular ring. Use an unnumbered mechanical through-hole pad, no assigned net, B.Cu/B.Mask copper only. Export the slot in the plated drill file, never on `Edge.Cuts`. A KiCad oval is a capsule; the contour generation now uses the same capsule geometry, rather than an ellipse.
+
+Beam roots move from approximately Y = ±3.1 to ±3.75 mm to clear the new side lobes. The intended straight channels are 1.20 mm; final routed regions are generated from the entire retained shape and rounded with a 0.55 mm finishing radius. The regenerated footprint has two closed routed regions and one connected retained PCB. Checks against the emitted lines/arcs measure at least approximately 0.548 mm FR-4 around the V1 posts and 0.398 mm copper-to-route clearance. The smooth geometric source measures approximately 0.550 mm and 0.400 mm respectively; the difference is the documented curve-fitting tolerance.
+
+At 19.05 mm pitch, adjacent V1 lobes scallop both sides of a shared rail: 19.05 − 2 × (5.50 + 1.50 + 1.20) = **2.65 mm**, rather than 4.0 mm at that local section. The upper electrical-pad scallop leaves approximately 2.875 mm in the corrected -5.90 mm layout. Support the 2.65 mm local rail with matching case ribs. Relieve the continuous gasket sheet around these scallops: with 0.30 mm clearance on each side, its local web is approximately 2.05 mm. A uniform 3.4 mm web is suitable only over the unscalloped 4.0 mm rail. Keep every switch in the same rotation.
+
+This is the combined standard PG1350 V1 / PG1353 V2 solder footprint without an LED aperture. Validate the exact purchased switch against its manufacturer drawing; other low-profile Kailh series are not covered.
 
 ### Gateron KS-27 / KS-33 low profile
 
@@ -92,7 +109,7 @@ The two gaskets are each one connected sheet covering the complete keyboard. The
 
 The upper and lower case need matching continuous ribs above and below the 4.0 mm PCB grid. Without those ribs, even a wider rail can act as a second spring and move neighboring keys. Add rigid compression bosses at the four internal grid crossings of the 3×3 matrix; these bosses set the gasket compression and prevent the center of the lattice from floating. Mounting screws or posts belong in the 6.0 mm outer PCB border or at the enlarged grid intersections, never on a moving island.
 
-Keep all switches in the same rotation. Choc and Gateron pad-clearance notches then occur on only one side of each shared boundary. Rotating alternate switches can place two notches opposite one another and unnecessarily weaken the rail.
+Keep all switches in the same rotation. Electrical-pad scallops in the Choc and Gateron layouts then occur on only one side of each shared boundary. Choc V1 locating-hole scallops face each other even at the same orientation; their 2.65 mm shared rail is accounted for above.
 
 ## Prototype coupon
 
@@ -117,14 +134,16 @@ Keep slot width, island geometry, gasket, and hard-stop clearance identical. The
 
 ## JLCPCB capability check
 
-Checked against JLCPCB's published rigid-PCB capabilities on 2026-10-14:
+Checked against JLCPCB's published rigid-PCB capabilities on 2026-10-15:
 
 | Item | JLCPCB published capability | This design |
 | --- | --- | --- |
 | PCB construction | 1.2 mm two-layer FR-4 available | 1.2 mm, two layer |
 | Non-plated routed slot | 1.0 mm minimum | 1.20 mm nominal minimum routed channel |
 | Copper to routed edge/slot | 0.20 mm minimum | 0.40 mm around exposed pad lobes |
-| Non-plated hole | 0.50 mm minimum | Smallest switch locating hole is approximately 1.5 mm |
+| Non-plated hole | 0.50 mm minimum | Choc V1 locating holes Ø1.90 mm; center Ø5.10 mm |
+| Plated slot (2-layer) | ≥0.50 mm width; length ≥2× width | Choc support 1.50 × 3.00 mm |
+| PTH annular ring (1 oz, 2-layer) | Recommended ≥0.25 mm | Choc support 0.45 mm; signal pads 0.425 mm |
 | Non-plated slot tolerance | ±0.20 mm regular | Use ±0.20 mm regular; ±0.10 mm is optional |
 | High-precision routing eligibility | At least 50 × 50 mm and three ≥1.5 mm tooling holes in different corners | 65.15 × 65.15 mm and four 2.0 mm corner holes |
 | Cutter radius implied by 1.0 mm route | 0.50 mm | 0.55 mm minimum final-contour fillets; 0.75 mm island blends; 1.5 mm cell corners |
@@ -141,5 +160,7 @@ For the JLCPCB promotional prototype price, use the ordinary two-layer process: 
 - JLCPCB PCB capabilities: https://jlcpcb.com/capabilities/pcb-capabilities
 - JLCPCB flex-routing guidance: https://jlcpcb.com/blog/flex-pcb-design-guide
 - ai03 MX_V2 footprint library: https://github.com/ai03-2725/MX_V2
-- Kailh Choc V2 datasheet: https://www.kailhswitch.com/uploads/15927/files/CPG1353S01D01-01-data-sheet.pdf
+- Kailh PG1350 V1 manufacturer drawing (CPG135001D03, page 1): https://cdn-shop.adafruit.com/product-files/5114/5114_CPG135001D03.pdf
+- Kailh PG1353 V2 manufacturer drawing (CPG135301D01, page 1): https://cdn.shopify.com/s/files/1/0657/6075/5954/files/SPEC-CPG135301D01_Kailh_Choc_V2_Low_Profile_Red_Switch.pdf?v=1666690444
+- Kailh V2 datasheet index: https://www.kailh.net/pages/product-datasheet
 - Gateron KS-33 drawing: https://gateron.com/u_file/2311/10/file/GATERONKS-33LowProfile20RedSwitchBlackBottomHousing-KS-33H10B050NN-Y24.pdf

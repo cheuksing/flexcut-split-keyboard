@@ -2,7 +2,7 @@
 
 Three solder-only Ergogen switch footprints with the per-key flex cuts from
 [keyboard-flex-study](keyboard-flex-study/design-notes.md): Gateron KS-33,
-Kailh Choc **V2**, and Cherry MX. The switch mounts on top of the PCB; solder-pad
+Kailh Choc **V1 / V2**, and Cherry MX. The switch mounts on top of the PCB; solder-pad
 copper and mask apertures are on **B.Cu / B.Mask only**. Signal holes and the Choc
 support slot remain plated. There are no hotswap sockets or paste apertures.
 
@@ -11,8 +11,15 @@ case and production fabrication files await review and approval.
 
 ## Review
 
-Requires Node.js 22 or newer. The build and checks use only Node's standard library;
-no package installation is needed.
+Requires Node.js 22 or newer. Build/API tests use Node's standard library. The
+manufacturing geometry gate also needs Python with Shapely. One-time setup:
+
+```sh
+python3 -m venv .venv-manufacturing
+.venv-manufacturing/bin/python -m pip install -r scripts/requirements-manufacturing.txt
+```
+
+For an existing Python environment, set `MANUFACTURING_PYTHON` to its interpreter.
 
 ```sh
 npm run check
@@ -25,18 +32,24 @@ and mirrored bottom views. The generated `build/review/SwitchFlex.pretty/` direc
 contains three standalone `.kicad_mod` files to open in KiCad's Footprint Editor.
 `build/review/footprints.svg` is a static overview.
 
-See [footprint details](docs/footprints.md) for coordinates, deviations from the study,
-validation limits and Ergogen usage.
+Read the [manufacturing, physical and design constraint register](docs/manufacturing-limitations.md)
+after every design revision. `npm run check` verifies all three emitted footprints
+and their repeating 3×3 boards, then updates the [exact-input verification report](docs/manufacturing-verification.md).
+`npm run review` runs this gate before generating drawings. Failures stop the
+workflow; manual/CAM/hardware items remain explicitly open.
+
+See [footprint details](docs/footprints.md) for coordinates, deviations from the
+study and Ergogen usage.
 
 ## Structure
 
 ```text
-keyboard-flex-study/       Original research and drawings, preserved unchanged
+keyboard-flex-study/       Research and drawings; Choc updated for V1 / V2
 ergogen/
   config.yaml             Single-key review fixtures, not the keyboard layout
   footprints/
     ks33.js               Self-contained generated Ergogen footprint
-    choc.js               Self-contained generated Ergogen footprint (V2)
+    choc.js               Self-contained generated Ergogen footprint (V1 / V2)
     mx.js                 Self-contained generated Ergogen footprint
 scripts/
   build-footprints.js     Reconstruct study contours and emit footprint modules

@@ -1,5 +1,7 @@
 .DS_Store
 node_modules/
+.venv-manufacturing/
+__pycache__/
 build/
 *-backups/
 *.kicad_prl

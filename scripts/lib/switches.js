@@ -11,14 +11,15 @@ module.exports = [
     note: 'KS-33 solder pattern; center bore corrected to the supplied manufacturer drawing (5.25 mm). No LED aperture.',
   },
   {
-    id: 'choc', study: 'choc', name: 'Kailh Choc V2',
+    id: 'choc', study: 'choc', name: 'Kailh Choc V1 / V2',
     center: 5.1, envelope: [15, 15],
-    pins: [{ number: '1', x: 5, y: -3.8 }, { number: '2', x: 0, y: -6 }],
-    drill: 1.45, holes: [],
-    // A KiCad oval is a capsule, wider diagonally than the study's ellipse.
-    // Reduce each pad dimension by 0.10 mm to preserve its routed clearance.
-    support: { x: -5, y: 5.15, size: [2.4, 2.9], drill: [1.5, 2] },
-    note: 'Choc V2 only: the study does not provide Choc V1 locating-hole lobes. Support slot is plated, unnumbered and unconnected.',
+    pins: [{ number: '1', x: 5, y: -3.8 }, { number: '2', x: 0, y: -5.9 }],
+    drill: 1.45,
+    holes: [{ x: -5.5, y: 0, diameter: 1.9 }, { x: 5.5, y: 0, diameter: 1.9 }],
+    // V1 uses the two NPTH locating posts; V2 uses the solderable metal support.
+    // JLCPCB specifies plated slot length >= 2x width. Both pad and drill are capsules.
+    support: { x: -5, y: 5.15, size: [2.4, 3.9], drill: [1.5, 3] },
+    note: 'Combined PG1350 V1 / PG1353 V2 pattern: two V1 locating holes on the moving island; V2 support slot plated, unnumbered and unconnected. No LED aperture.',
   },
   {
     id: 'mx', study: 'mx', name: 'Cherry MX',

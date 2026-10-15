@@ -26,10 +26,11 @@ built-in MX footprint; use this mapping when the schematic is created later.
 | KS-33 | Center NPTH | 0 | 0 | None | Ø5.25 |
 | KS-33 | Pad 1 (`from`) | -4.4 | 4.7 | Ø2.30 | Ø1.45 plated |
 | KS-33 | Pad 2 (`to`) | 2.6 | 5.75 | Ø2.30 | Ø1.45 plated |
-| Choc V2 | Center NPTH | 0 | 0 | None | Ø5.10 |
-| Choc V2 | Pad 1 (`from`) | 5 | -3.8 | Ø2.30 | Ø1.45 plated |
-| Choc V2 | Pad 2 (`to`) | 0 | -6 | Ø2.30 | Ø1.45 plated |
-| Choc V2 | Support, no number/net | -5 | 5.15 | 2.40 × 2.90 oval | 1.50 × 2.00 plated oval slot |
+| Choc V1/V2 | Center NPTH | 0 | 0 | None | Ø5.10 |
+| Choc V1 | Locating NPTHs | ±5.50 | 0 | None | Ø1.90 |
+| Choc V1/V2 | Pad 1 (`from`) | 5 | -3.8 | Ø2.30 | Ø1.45 plated |
+| Choc V1/V2 | Pad 2 (`to`) | 0 | -5.9 | Ø2.30 | Ø1.45 plated |
+| Choc V1/V2 | Support, no number/net | -5 | 5.15 | 2.40 × 3.90 capsule | 1.50 × 3.00 plated capsule slot |
 | MX | Center NPTH | 0 | 0 | None | Ø3.99 |
 | MX | Locating NPTHs | ±5.08 | 0 | None | Ø1.70 |
 | MX | Pad 1 (`from`) | -3.81 | -2.54 | Ø2.30 | Ø1.524 plated |
@@ -44,28 +45,37 @@ pads do not make the plated holes blind holes.
 
 ## Deliberate changes from the study
 
-- **Choc V2 only**, as confirmed during review preparation. The study called its
-  pattern V1/V2 but omitted the two V1 locating holes. The generated footprint
-  does not claim V1 compatibility.
+- **Choc V1 / V2 combined**: two V1 Ø1.90 mm NPTH locating holes at
+  (±5.50, 0) now have their own retained island lobes. The V2 center bore remains
+  Ø5.10 mm and the V2 solder support remains an unnumbered no-net plated pad.
+  Electrical pad 2 is corrected to Y = -5.90 mm from Kailh's drawings.
+  Both folded beams were repositioned to clear the new lobes. Facing locator
+  scallops leave a 2.65 mm local shared rail at 19.05 mm pitch. Matching case ribs
+  and a locally relieved continuous gasket sheet are required; with 0.30 mm
+  clearance on each side, the local gasket web is 2.05 mm.
 - **KS-33 center hole: 5.25 mm**, corrected from the study's 5.10 mm to the PCB
   layout dimension in the supplied `gateron-ks33-drawing.png`. Signal drills keep
   the study's smaller 1.45 mm solder-hole sizing. This footprint omits the LED
   aperture and is not a general declaration of KS-27 compatibility.
-- **Choc support copper: 2.40 × 2.90 mm** instead of 2.50 × 3.00 mm. KiCad's oval
-  is a capsule, whereas the study depicts an ellipse. A full-size capsule would
-  reduce copper-to-route clearance to about 0.349 mm. Reducing the pad dimensions
-  by 0.10 mm restores about 0.399 mm clearance while retaining a 0.45 mm annular
-  ring around the unchanged 1.50 × 2.00 mm plated slot. The support pad remains
-  electrically unconnected and is marked mechanical.
-- **All solder copper is bottom-only**, overriding the study's both-layer support
-  pad instruction as requested. Plated drills are retained.
+- **Choc support copper: 2.40 × 3.90 mm capsule**, around a 1.50 × 3.00 mm
+  plated slot. JLCPCB's published plated-slot length is at least twice its width,
+  so the previous 1.50 × 2.00 mm aperture has been lengthened. It still encompasses
+  that earlier aperture. The 0.45 mm annular ring is solderable and the regenerated
+  contour keeps about 0.408 mm copper-to-route clearance. The study and emitted
+  pad now both use an actual capsule, eliminating the ellipse/capsule mismatch.
+- **All solder copper is bottom-only**, including the no-net support pad.
+  Plated drills are retained.
 - **Body guides are separate from plate openings**: the non-fabricating `F.Fab`
   guides use 15 mm square bounds for KS-33/Choc and 15.6 mm for MX. They are visual
   envelopes, not dimensioned plate cutouts; final mechanical CAD must use the
   selected switch's complete drawing and tolerances.
 
-The original study files are unchanged. Treat these as engineering review
-footprints, pending the native CAD and hardware checks below.
+The Choc study contours and preview have been revised together with the footprint.
+Treat these as engineering review footprints, pending native CAD and hardware checks.
+Optional contour regeneration: install Shapely >=2 in a Python environment and run
+`python3 scripts/rebuild-choc-study.py`, then `npm run check` and `npm run review`.
+Ordinary Node builds use the checked-in study. The mandatory manufacturing check
+uses Python/Shapely; setup is documented in the README.
 
 ## Using Ergogen
 
@@ -123,11 +133,18 @@ avoid vias, joints and component bodies on the beams.
 
 ## Validation performed
 
-`npm run check` rebuilds all three modules and runs seven tests with no third-party
-dependencies. Checks cover the Ergogen bundle loading contract, escaped references,
+`npm run check` rebuilds all three modules and runs eight Node tests without Node
+dependencies, then the mandatory Python/Shapely manufacturing gate. Checks cover
+the Ergogen bundle loading contract, escaped references,
 required nets, pin/net mapping, pad layers and drills, unconnected plated support,
 placement at 0°, 37°, 90° and 180°, drawing toggles, two exactly closed cut loops,
-and reproducible generation.
+and reproducible generation. The additional gate checks cutter access, plated
+slot width/aspect ratio, annular rings, drill spacing, both suspension paths,
+island necks, repeated 3×3 rails and adverse-tolerance connectivity for every
+footprint. It also exercises malformed short/narrow slots, a thin bridge and an
+inaccessible routing spur to verify rejection. See the complete
+[constraint register](manufacturing-limitations.md) and generated
+[verification report](manufacturing-verification.md).
 
 The study's thousands of quantized SVG segments are reconstructed as lines and
 true circular arcs with a 0.002 mm vertex-fit tolerance. Reverse sampling checks
@@ -146,10 +163,9 @@ regression checks, not a fabrication certification.
 
 ## Pending native and hardware checks
 
-The environment has no available Ergogen or KiCad executable; dependency downloads
-are unavailable. The CLI fixture has therefore **not** been executed by Ergogen,
-and no KiCad load/save, DRC or Gerber/drill export has been claimed. The review
-page is generated from parsed footprint expressions, not a native KiCad render.
+The CLI fixture has **not** been executed by Ergogen, and no native KiCad
+load/save, DRC or Gerber/drill export has been performed. The review page is
+generated from parsed footprint expressions, not a native KiCad render.
 
 Before fabrication, load the standalone footprints and generated coupons in the
 target KiCad version, save/reopen, and inspect front/back copper separately. Verify
@@ -169,7 +185,9 @@ coupon. The study's construction remains experimental until this physical work.
   in [key-flex-cuts.html](../keyboard-flex-study/key-flex-cuts.html).
 - [Supplied KS-33 drawing](../keyboard-flex-study/gateron-ks33-drawing.png) and
   [Gateron manufacturer PDF](https://gateron.com/u_file/2311/10/file/GATERONKS-33LowProfile20RedSwitchBlackBottomHousing-KS-33H10B050NN-Y24.pdf).
-- [Kailh Choc V2 manufacturer datasheet](https://www.kailhswitch.com/uploads/15927/files/CPG1353S01D01-01-data-sheet.pdf).
+- [Kailh V1 manufacturer drawing](https://cdn-shop.adafruit.com/product-files/5114/5114_CPG135001D03.pdf), page 1.
+- [Kailh V2 manufacturer datasheet](https://www.kailh.net/pages/product-datasheet), PG1353 page 1.
+- [JLCPCB capabilities](https://jlcpcb.com/capabilities/Capabilities), including NPTH, routed-edge clearance, plated-slot aspect ratio and Regular tolerance.
 - [Ergogen footprint API](https://docs.ergogen.xyz/pcbs/) and
   [bundle loader](https://github.com/ergogen/ergogen/blob/master/src/io.js).
 - [Ergogen's KiCad 8 template](https://github.com/ergogen/ergogen/blob/master/src/templates/kicad8.js)

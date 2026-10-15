@@ -65,8 +65,8 @@ for (const spec of specs) {
       if (spec.support) {
         const pad = pads.find(pad => pad[2] === 'thru_hole' && pad[1] === '');
         assert.deepEqual(child(pad, 'layers'), ['layers', 'B.Cu', 'B.Mask']);
-        assert.deepEqual(child(pad, 'drill'), ['drill', 'oval', '1.5', '2']);
-        assert.deepEqual(numbers(pad, 'size'), [2.4, 2.9]);
+        assert.deepEqual(child(pad, 'drill'), ['drill', 'oval', '1.5', '3']);
+        assert.deepEqual(numbers(pad, 'size'), [2.4, 3.9]);
         assert.deepEqual(numbers(pad, 'at'), [-5, 5.15, r]);
         assert(!child(pad, 'net'));
       }
@@ -140,10 +140,32 @@ for (const spec of specs) {
       }
       if (isCopper) assert(clearance >= 0.39, `Copper-to-route clearance ${clearance.toFixed(4)} mm < study margin`);
       else assert(clearance >= 0.39, `Hole-to-route retained material ${clearance.toFixed(4)} mm < 0.39 mm`);
+      if (spec.id === 'choc' && !isCopper && x !== 0) {
+        assert(clearance >= 0.54, `V1 locating hole has insufficient retained material: ${clearance}`);
+      }
       console.log(`${spec.id} ${isCopper ? 'copper' : 'hole'} (${x}, ${y}): route clearance ${clearance.toFixed(3)} mm`);
     }
   });
 }
+
+test('Choc retains both V1 plastic locating posts and the separate V2 solder support', () => {
+  const fp = load('choc');
+  const pads = children(parse(fp.body(parameters(fp))), 'pad');
+  const locators = pads.filter(pad => pad[2] === 'np_thru_hole' && numbers(pad, 'at')[0] !== 0);
+  assert.equal(locators.length, 2, 'V1 needs two additional locating holes');
+  for (const x of [-5.5, 5.5]) {
+    const hole = locators.find(pad => numbers(pad, 'at')[0] === x);
+    assert.deepEqual(numbers(hole, 'at'), [x, 0, 0]);
+    assert.deepEqual(numbers(hole, 'drill'), [1.9]);
+    assert.equal(hole[1], '');
+    assert(!child(hole, 'net'));
+  }
+  const support = pads.find(pad => pad[2] === 'thru_hole' && pad[1] === '');
+  assert(support && !child(support, 'net'));
+  const [, , width, length] = child(support, 'drill');
+  assert(Number(length) >= 2 * Number(width), 'JLCPCB plated slot length must be at least twice its width');
+  assert.deepEqual(numbers(pads.find(pad => pad[1] === '2'), 'at'), [0, -5.9, 0]);
+});
 
 test('generated footprints are reproducible', () => {
   require('../scripts/build-footprints').build(true);

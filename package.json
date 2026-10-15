@@ -6,8 +6,9 @@
   "scripts": {
     "build": "node scripts/build-footprints.js",
     "test": "node --test tests/footprints.test.js",
-    "check": "npm run build && npm test",
-    "review": "node scripts/build-review.js"
+    "check": "node scripts/invalidate-verification.js && npm run build && npm test && npm run manufacturing",
+    "manufacturing": "node scripts/check-manufacturing.js",
+    "review": "npm run check && node scripts/build-review.js"
   },
   "engines": { "node": ">=22" }
 }
