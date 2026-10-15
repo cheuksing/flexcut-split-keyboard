@@ -61,9 +61,9 @@ checks do not establish native KiCad, CAM, fatigue or price approval.
 
 `npm run build:keyboard` emits CAD without the manufacturing gate. Use the npm
 runner: it sets PCB thickness to **1.2 mm**; the bare Ergogen KiCad 8 CLI template
-defaults to 1.6 mm. The generated footprint library and `fp-lib-table` accompany
-the PCB/schematic for later native CAD review. Build outputs are regenerable and
-ignored by Git.
+defaults to 1.6 mm. Generated `*.kicad*` files under `build/` are committed so
+they can be previewed in KiCanvas; other build outputs remain ignored and can be
+recreated with `npm run review`.
 
 ## Design sources
 

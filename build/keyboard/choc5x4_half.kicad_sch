@@ -6,9 +6,9 @@
     (symbol "Keyboard:ChocSwitch" (pin_names (offset 0) hide) (in_bom yes) (on_board yes)
       (property "Reference" "SW" (at 0 3.81 0) (effects (font (size 1.27 1.27)))) (property "Value" "Choc V1/V2" (at 0 -3.81 0) (effects (font (size 1.27 1.27))))
       (symbol "ChocSwitch_0_1"
-        (circle (center -2.54 0) (radius .508) (stroke (width .254) (type default)) (fill (type none)))
-        (circle (center 2.54 0) (radius .508) (stroke (width .254) (type default)) (fill (type none)))
-        (polyline (pts (xy -2.54 .508) (xy 2.54 2.032)) (stroke (width .254) (type default)) (fill (type none))))
+        (circle (center -2.54 0) (radius 0.508) (stroke (width 0.254) (type default)) (fill (type none)))
+        (circle (center 2.54 0) (radius 0.508) (stroke (width 0.254) (type default)) (fill (type none)))
+        (polyline (pts (xy -2.54 0.508) (xy 2.54 2.032)) (stroke (width 0.254) (type default)) (fill (type none))))
       (symbol "ChocSwitch_1_1" (pin passive line (at -5.08 0 0) (length 2.032)
     (name "1" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27))))) (pin passive line (at 5.08 0 180) (length 2.032)
     (name "2" (effects (font (size 1.27 1.27)))) (number "2" (effects (font (size 1.27 1.27)))))))
@@ -16,8 +16,8 @@
       (property "Reference" "D" (at 0 3.81 0) (effects (font (size 1.27 1.27)))) (property "Value" "1N4148W" (at 0 -3.81 0) (effects (font (size 1.27 1.27))))
       (symbol "Diode_0_1"
         (polyline (pts (xy -1.27 -1.27) (xy -1.27 1.27) (xy 1.27 0) (xy -1.27 -1.27))
-          (stroke (width .254) (type default)) (fill (type none)))
-        (polyline (pts (xy 1.27 -1.27) (xy 1.27 1.27)) (stroke (width .254) (type default)) (fill (type none))))
+          (stroke (width 0.254) (type default)) (fill (type none)))
+        (polyline (pts (xy 1.27 -1.27) (xy 1.27 1.27)) (stroke (width 0.254) (type default)) (fill (type none))))
       (symbol "Diode_1_1" (pin passive line (at -5.08 0 0) (length 3.81)
     (name "A" (effects (font (size 1.27 1.27)))) (number "2" (effects (font (size 1.27 1.27))))) (pin passive line (at 5.08 0 180) (length 3.81)
     (name "K" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27))))))))

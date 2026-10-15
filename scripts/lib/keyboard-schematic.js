@@ -18,16 +18,16 @@ function library() {
     (symbol "Keyboard:ChocSwitch" (pin_names (offset 0) hide) (in_bom yes) (on_board yes)
       ${property('Reference', 'SW', 3.81)} ${property('Value', 'Choc V1/V2', -3.81)}
       (symbol "ChocSwitch_0_1"
-        (circle (center -2.54 0) (radius .508) (stroke (width .254) (type default)) (fill (type none)))
-        (circle (center 2.54 0) (radius .508) (stroke (width .254) (type default)) (fill (type none)))
-        (polyline (pts (xy -2.54 .508) (xy 2.54 2.032)) (stroke (width .254) (type default)) (fill (type none))))
+        (circle (center -2.54 0) (radius 0.508) (stroke (width 0.254) (type default)) (fill (type none)))
+        (circle (center 2.54 0) (radius 0.508) (stroke (width 0.254) (type default)) (fill (type none)))
+        (polyline (pts (xy -2.54 0.508) (xy 2.54 2.032)) (stroke (width 0.254) (type default)) (fill (type none))))
       (symbol "ChocSwitch_1_1" ${pin('1','1',-5.08,0,2.032)} ${pin('2','2',5.08,180,2.032)}))
     (symbol "Keyboard:Diode" (pin_names (offset 0) hide) (in_bom yes) (on_board yes)
       ${property('Reference', 'D', 3.81)} ${property('Value', '1N4148W', -3.81)}
       (symbol "Diode_0_1"
         (polyline (pts (xy -1.27 -1.27) (xy -1.27 1.27) (xy 1.27 0) (xy -1.27 -1.27))
-          (stroke (width .254) (type default)) (fill (type none)))
-        (polyline (pts (xy 1.27 -1.27) (xy 1.27 1.27)) (stroke (width .254) (type default)) (fill (type none))))
+          (stroke (width 0.254) (type default)) (fill (type none)))
+        (polyline (pts (xy 1.27 -1.27) (xy 1.27 1.27)) (stroke (width 0.254) (type default)) (fill (type none))))
       (symbol "Diode_1_1" ${pin('2','A',-5.08,0,3.81)} ${pin('1','K',5.08,180,3.81)})))`;
 }
 

@@ -14,6 +14,10 @@ function parse(text) {
       if (tokens[position] === '(') result.push(read());
       else {
         const value = tokens[position++];
+        // KiCanvas cannot start a numeric token with a decimal point. Require
+        // canonical leading zeros in every emitted CAD file, not just the one
+        // pad/font field that first exposed the problem. Quoted text is exempt.
+        if (/^[+-]?\.\d/.test(value)) throw new Error(`Decimal atom ${value} needs a leading zero (for example 0.6, not .6)`);
         result.push(value.startsWith('"') ? JSON.parse(value) : value);
       }
     }
