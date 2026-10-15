@@ -34,7 +34,7 @@ function library() {
 function schematic(keys) {
   const root = uuid('root');
   const output = [`(kicad_sch (version 20231120) (generator "keyboard-design")
-    (uuid ${root}) (paper "A3")
+    (uuid ${root}) (paper "A2")
     (title_block (title "Choc 5x4 identical half - five-net charlieplex matrix") (rev "0.2.0")
       (comment 1 "UNROUTED REVIEW - controller / adapter / electrical rollover validation pending"))`, library()];
   const text = (s,x,y,id) => output.push(`(text ${q(s)} (at ${n(x)} ${n(y)} 0) ${font} (uuid ${uuid(id)}))`);
@@ -73,7 +73,7 @@ function schematic(keys) {
   }
   text('Scan one Pn LOW; remaining lines are pulled-up inputs. Release to input before changing the sink.',200.66,241.3,'scan');
   text('Series diodes do not establish NKRO: two-key forward paths can mimic a third key. Validate thresholds / scan method.',200.66,248.92,'ghosting');
-  text('No MCU, adapter, connector, power or inter-half wiring is selected in this matrix-only revision.',200.66,256.54,'scope');
+  text('USB-C interface below. VBUS / CC / USB2 / GND contacts NC. GPIO ONLY; electrical qualification pending.',200.66,256.54,'scope');
   output.push(')');
   return output.join('\n');
 }

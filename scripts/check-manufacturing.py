@@ -230,15 +230,26 @@ except (ValueError, AssertionError) as error:
     failures.append(str(error))
     print(f'keyboard: FAIL: {error}')
 
+panel_spec = importlib.util.spec_from_file_location('check_panel', ROOT/'scripts/check-panel.py')
+panel_module = importlib.util.module_from_spec(panel_spec)
+panel_spec.loader.exec_module(panel_module)
+panel_result = None
+try:
+    panel_result = panel_module.verify_panel(KEYBOARD, PAYLOAD['adapter'], PAYLOAD['panel'], RULES)
+    print(f"panel: actual half + passive adapter PASS; {panel_result['width_mm']:.3f} x {panel_result['height_mm']:.3f} mm; two mouse-bite tabs")
+except (ValueError, AssertionError) as error:
+    failures.append('panel: '+str(error))
+    print(f'panel: FAIL: {error}')
+
 inputs = [ROOT/"keyboard-flex-study/key-flex-cuts.html", ROOT/"scripts/rebuild-choc-study.py"]
 inputs += sorted((ROOT/"scripts/lib").glob("*.*"))
 inputs += sorted((ROOT/"ergogen/footprints").glob("*.js"))
 inputs += sorted((ROOT/"scripts").glob("*.js"))
 inputs += [ROOT/"scripts/check-manufacturing.py", ROOT/"package.json"]
-inputs += [ROOT/'scripts/check-keyboard.py', ROOT/'ergogen/config.yaml', ROOT/'package-lock.json',
+inputs += [ROOT/'scripts/check-keyboard.py', ROOT/'scripts/check-panel.py', ROOT/'ergogen/config.yaml', ROOT/'package-lock.json',
            ROOT/'scripts/requirements-manufacturing.txt',
            ROOT/'build/keyboard/choc5x4_half.kicad_pcb', ROOT/'build/keyboard/choc5x4_half.kicad_sch',
-           ROOT/'build/keyboard/keys.json']
+           ROOT/'build/keyboard/keys.json', ROOT/'build/keyboard/adapter.kicad_pcb', ROOT/'build/keyboard/adapter.kicad_sch', ROOT/'build/keyboard/choc5x4_panel.kicad_pcb']
 digest = hashlib.sha256()
 toolchain = {**PAYLOAD['toolchain'], 'python':sys.version.split()[0], 'shapely':shapely.__version__}
 digest.update(json.dumps(toolchain,sort_keys=True).encode())
@@ -251,7 +262,7 @@ output = ROOT/"build/review"
 output.mkdir(parents=True, exist_ok=True)
 (output/"manufacturing-check.json").write_text(json.dumps({
     "status": status, "date": str(date.today()), "input_sha256": fingerprint, "toolchain":toolchain,
-    "results": results, "keyboard": keyboard_result, "failures": failures, "warnings": warnings,
+    "results": results, "keyboard": keyboard_result, "panel":panel_result, "failures": failures, "warnings": warnings,
     "manual_reviews": ["Native KiCad DRC and Gerber/drill export", "CAM acceptance of narrow rigid-FR4 bridges",
                        "Switch-SKU physical fit", "Case/gasket support and hard stops", "FR4/copper fatigue and neighbour displacement", "Live order price"],
 }, indent=2)+"\n")
@@ -274,12 +285,25 @@ if keyboard_result:
               '- Five scan nets cover all 20 directed pairs. Parsed schematic wire/pin connectivity matches emitted PCB pads.',
               f"- All 40 internal cutouts remain separate; both beams/key, rigid island necks, actual drilled half and adverse route/drill screen pass.",
               f"- Minimum actual staggered stationary rail: **{k['min_shared_rail_mm']:.3f} mm**; adverse two-edge screen **{k['shared_rail_adverse_stack_mm']:.3f} mm**.",
+              f"- Minimum cut-to-exterior stationary land: **{k['min_cut_to_outline_land_mm']:.3f} mm**; adverse two-edge screen **{k['cut_to_outline_adverse_stack_mm']:.3f} mm**.",
               f"- Diodes lie on stationary material; minimum diode copper/edge clearance **{k['min_diode_copper_to_route_mm']:.3f} mm**.",
               f"- Upper gasket web before component relief: **{k['min_gasket_web_before_component_reliefs_mm']:.3f} mm**. Separate lower diode reliefs; both sheets/rib plans remain connected and exclude moving systems.",
               '- Support outputs are 2D concepts only: lower-relief load paths, clamps/mounts, hard stops, compression and complete case Z geometry remain open.',
               '- Unsupported support tongues are deliberately omitted from the 2D plans, with per-piece area guard; this changes clamp coverage and needs mechanical review: '+('; '.join(f"{s['sheet']}: {s['omitted_lobes']} lobes / {s['omitted_area_mm2']:.2f} mm²" for s in k['support_tongues_deliberately_omitted']))+'.',
-              '- Board is **unrouted**. No native KiCad ERC/DRC has run. MCU pin thresholds, diode voltage margins, multi-key ghosting, firmware, adapter and connector remain open.',
-              '- Board width exceeds 100 mm. No 100 × 100 mm promotion eligibility or USD 2 price is claimed.', '']
+              '- Board is **unrouted**. No native KiCad ERC/DRC has run. MCU pin thresholds, diode voltage margins, multi-key ghosting, firmware and powered/unpowered protection qualification remain open.',
+              '- Actual half, passive adapter and two-tab panel are implemented in native CAD; promotional price is not certified.',
+              '- **USB-C interface DESIGN HOLD:** selected pin groups preserve identity with adapter compensation in all four modeled orientations; input margins, rollover and protection qualification remain unresolved. See [interface verification](usb-c-interface-verification.md); `npm run check:interface` is a separate failing electrical release gate.', '']
+if panel_result:
+    p=panel_result
+    lines += ['', '## Actual breakaway panel and passive adapter', '',
+      f"- Bare panel: **{p['width_mm']:.3f} × {p['height_mm']:.3f} mm**; conservative outline-tolerance envelope {p['outline_tolerance_upper_bound_mm'][0]:.3f} × {p['outline_tolerance_upper_bound_mm'][1]:.3f} mm.",
+      f"- Actual separated-board gap {p['min_board_separation_mm']:.3f} mm; two five-hole mouse-bite tabs. Simulated removal leaves two connected boards.",
+      f"- Adapter {p['adapter']['components']} components including XIAO header carrier; panel {p['panel']['components']} footprints including tabs. Pad clearances, functional drills and courtyards screened on emitted geometry.",
+      '- USB4115-03-C is an upright 24-contact connector, 9.3 mm tall. Four shell stakes and two locating holes are included per connector.',
+      '- XIAO mounts on two six-pin headers after depaneling, with D0/5V omitted. Its module body overhangs the carrier and needs at least 3 mm standoff; purchased header fit and case Z geometry remain manual.',
+      '- Adapter contains series/contact-isolation resistors and TVS only; no LDO, charge pump, reference or active protection IC. TVS does not guarantee MCU fault protection.',
+      '- Mouse-bite perforations intentionally have 0.40 mm hole-edge gaps; the separate ≥0.45 mm functional-hole rule remains unchanged.',
+      '- The half upper-left connector bay is relieved in both continuous gasket and matching rib concepts. Final clamps, port access and depanel tooling remain open.', '']
 lines += ["", "## Open reviews and tolerance warnings", ""] + [f"- {w}" for w in warnings]
 lines += ["- Native KiCad loading/DRC and final Gerber/drill outputs have not been checked.",
           "- Thin rigid-FR4 beams require CAM acceptance; tool access does not certify breakage resistance.",

@@ -6,9 +6,13 @@ pitch. Each half uses the generated solder-only **Choc V1/V2 flex footprint**,
 20 bottom-side SOD-123 diodes and **five charlieplex scan nets**. The right-hand
 anatomical columns reverse; the physical Choc pin patterns do not flip.
 
-Current scope: basic matrix layout, schematic and **unrouted** PCB. The adapter,
-connector, controller and firmware follow separately. Native KiCad ERC/DRC,
-charlieplex electrical rollover margins and full case construction remain open.
+Current CAD includes the **unrouted half, simple XIAO SAMD21 adapter and actual
+98.20×99.475 mm breakaway panel**. The adapter has headers, two upright USB-C
+ports, series/contact isolation resistors and TVS only. No extra regulator or
+active protector. Selected USB-C groups preserve identity in all four modeled
+plug orientations. Scan margins, rollover and powered/unpowered fault safety
+remain on [electrical hold](docs/usb-c-interface-verification.md).
+Native KiCad ERC/DRC and complete case construction remain open.
 
 ## Build and review
 
@@ -52,12 +56,21 @@ The following are local review artifacts; the workflow uses no browser or GUI:
   `build/review/SwitchFlex.pretty/` library.
 - [Exact-input verification](docs/manufacturing-verification.md) and
   [constraint register](docs/manufacturing-limitations.md).
+- [Actual panel](build/keyboard/panel-fit.svg), [adapter placement](build/keyboard/adapter.svg),
+  [panel PCB](build/keyboard/choc5x4_panel.kicad_pcb), [adapter PCB](build/keyboard/adapter.kicad_pcb)
+  and [adapter schematic](build/keyboard/adapter.kicad_sch).
+  Mount the XIAO on two six-pin headers after detaching the adapter; the module overhangs the carrier.
+
 
 `npm run check` rebuilds all footprints and the keyboard, tests actual schematic
 connectivity against PCB pad nets, and checks all three 3×3 fixtures **plus the
-complete staggered half**. It also rechecks derived continuous gasket/rib concepts.
+complete staggered half, adapter and actual panel**. It also rechecks derived continuous gasket/rib concepts.
 `npm run review` runs that full gate before emitting drawings. Ordinary drawing
 checks do not establish native KiCad, CAM, fatigue or price approval.
+
+`npm run check:interface` writes the USB-C electrical report and exits nonzero
+while scan margins, rollover and protection remain unresolved.
+This electrical release gate is separate from the geometry checks above.
 
 `npm run build:keyboard` emits CAD without the manufacturing gate. Use the npm
 runner: it sets PCB thickness to **1.2 mm**; the bare Ergogen KiCad 8 CLI template

@@ -53,7 +53,7 @@ function pcbPreview(text) {
   });
   if(!Number.isFinite(bounds[0])) throw new Error('PCB contains no drawable geometry');
   const path=contourPaths(outer).join(' ');
-  const [x,y,x2,y2]=bounds, width=x2-x,height=y2-y, pad=3;
+  const [x,y,x2,y2]=bounds, width=x2-x,height=y2-y, pad=5;
   let svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${n(x-pad)} ${n(y-pad)} ${n(width+2*pad)} ${n(height+2*pad)}" width="${n(width+2*pad)}mm" height="${n(height+2*pad)}mm"><title>Generated PCB preview, top view with bottom copper visible</title>`;
   svg+=`<rect x="${n(x-pad)}" y="${n(y-pad)}" width="${n(width+2*pad)}" height="${n(height+2*pad)}" fill="#edf0f4"/>`;
   if(path) svg+=`<path d="${path}" fill="#cbb77c" fill-rule="evenodd" stroke="#81754d" stroke-width=".08"/>`;
@@ -79,7 +79,8 @@ function pcbPreview(text) {
       svg+=`<rect x="${n(a)}" y="${n(b)}" width="${n(c-a)}" height="${n(d-b)}" fill="none" stroke="#1b698a" stroke-width=".1" stroke-dasharray=".6 .4"/>`;
     }
     const ref=children(fp,'fp_text').find(t=>t[1]==='reference')?.[2]||'';
-    svg+=`<text x="0" y="3.8" text-anchor="middle" fill="#203846" font-family="sans-serif" font-size="1.4">${esc(ref)}</text></g>`;
+    if(!/^[RE]/.test(ref)) svg+=`<text x="0" y="3.8" text-anchor="middle" fill="#203846" font-family="sans-serif" font-size="1.4">${esc(ref)}</text>`;
+    svg+='</g>';
   }
   svg+='</svg>';
   return {svg,widthMm:n(width),heightMm:n(height),footprints:footprints.length,pads,drills,

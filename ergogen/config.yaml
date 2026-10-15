@@ -5,7 +5,9 @@ meta:
   version: "0.2.0"
 units:
   pitch: 19.05
-  outer_margin: 4
+  # Reduced perimeter only; switch pitch, islands and beams retain their sizes.
+  side_margin: 1.475
+  end_margin: 2
   stagger_height: 8
 points:
   key:
@@ -70,13 +72,56 @@ points:
         r0:
           row_net: ROW0
 outlines:
-  half:
+  _base_half:
     - what: rectangle
       where:
         ref: matrix_middle_r2
         shift: [0, pitch / 2 - stagger_height / 2]
-      size: [5 * pitch + 2 * outer_margin, 4 * pitch + stagger_height + 2 * outer_margin]
+      size: [5 * pitch + 2 * side_margin, 4 * pitch + stagger_height + 2 * end_margin]
       fillet: 2
+  _adapter_neck:
+    - what: rectangle
+      where:
+        ref: matrix_middle_r3
+        shift: [0, -22.67]
+      size: [17.84, 15.30]
+      fillet: 1.30
+  adapter:
+    - what: outline
+      name: _adapter_neck
+    - what: rectangle
+      where:
+        ref: matrix_middle_r3
+        shift: [0, -25.90]
+      size: [60, 9.80]
+      fillet: 0.60
+  _adapter_gap:
+    - what: outline
+      name: adapter
+      expand: 1.60
+  half:
+    - what: outline
+      name: _base_half
+    - what: outline
+      name: _adapter_gap
+      operation: subtract
+      fillet: 0.60
+  panel:
+    - what: outline
+      name: half
+    - what: outline
+      name: adapter
+    - what: rectangle
+      where:
+        ref: matrix_middle_r3
+        shift: [-18.10, -20.20]
+      size: [5, 2.20]
+    - what: rectangle
+      where:
+        ref: matrix_middle_r3
+        shift: [18.10, -20.20]
+      size: [5, 2.20]
+      fillet: 0.60
 pcbs:
   choc5x4_half:
     template: kicad8
@@ -98,3 +143,42 @@ pcbs:
         params:
           anode: "K_{{column_net}}_{{row_net}}"
           cathode: "{{scan_to}}"
+      interface:
+        what: interface_half
+        where: matrix_middle_r3
+  adapter:
+    template: kicad8
+    outlines:
+      - outline: adapter
+    footprints:
+      interface:
+        what: interface_adapter
+        where: matrix_middle_r3
+  choc5x4_panel:
+    template: kicad8
+    outlines:
+      - outline: panel
+    footprints:
+      switches:
+        what: choc
+        where: true
+        params:
+          from: "{{scan_from}}"
+          to: "K_{{column_net}}_{{row_net}}"
+      diodes:
+        what: diode_sod123
+        where: true
+        adjust:
+          shift: [5, -pitch / 2]
+        params:
+          anode: "K_{{column_net}}_{{row_net}}"
+          cathode: "{{scan_to}}"
+      half_interface:
+        what: interface_half
+        where: matrix_middle_r3
+      adapter_interface:
+        what: interface_adapter
+        where: matrix_middle_r3
+      mouse_bites:
+        what: mouse_bites
+        where: matrix_middle_r3

@@ -24,10 +24,17 @@ function tangent(edge, end) {
 require('./build-footprints').build(true); // Refuse to check stale generated files.
 const keyboardBuild = spawnSync(process.execPath, [path.join(__dirname,'build-keyboard.js'),'--check'], {cwd:root,encoding:'utf8'});
 if (keyboardBuild.status !== 0) throw new Error(`Stale/invalid keyboard outputs; run npm run check.\n${keyboardBuild.stdout}\n${keyboardBuild.stderr}`);
-const {boardModel,schematicNets,verifyElectrical}=require('./lib/keyboard');
+const {boardModel,schematicNets,verifyElectrical,verifyInterface}=require('./lib/keyboard');
 const keyboard=boardModel(fs.readFileSync(path.join(root,'build/keyboard/choc5x4_half.kicad_pcb'),'utf8'));
 keyboard.keys=JSON.parse(fs.readFileSync(path.join(root,'build/keyboard/keys.json'),'utf8'));
 keyboard.electrical=verifyElectrical(keyboard,keyboard.keys,schematicNets(fs.readFileSync(path.join(root,'build/keyboard/choc5x4_half.kicad_sch'),'utf8')));
+const adapter=boardModel(fs.readFileSync(path.join(root,'build/keyboard/adapter.kicad_pcb'),'utf8'));
+adapter.electrical=verifyInterface(adapter,require('./lib/interface-hardware').adapter,schematicNets(fs.readFileSync(path.join(root,'build/keyboard/adapter.kicad_sch'),'utf8')));
+const panel=boardModel(fs.readFileSync(path.join(root,'build/keyboard/choc5x4_panel.kicad_pcb'),'utf8'));
+const assert=require('node:assert/strict');
+const panelParts=panel.footprints.filter(f=>f.name!=='keyboard-design:mouse_bites');
+assert.equal(new Set(panelParts.map(f=>f.ref)).size,panelParts.length,'Duplicate panel reference');
+assert.deepEqual(panelParts,[...keyboard.footprints,...adapter.footprints],'Panel components differ from separated boards');
 const models = specs.map(spec => {
   const fp = require(path.join(root, `ergogen/footprints/${spec.id}.js`));
   const tree = parse(fp.body(parameters(fp))), edges = primitives(tree);
@@ -58,7 +65,7 @@ const models = specs.map(spec => {
 const localPython = path.join(root, '.venv-manufacturing', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
 const python = process.env.MANUFACTURING_PYTHON || (fs.existsSync(localPython) ? localPython : 'python3');
 const result = spawnSync(python, [path.join(__dirname, 'check-manufacturing.py')], {
-  cwd: root, input: JSON.stringify({ models, keyboard, toolchain: {node:process.version,ergogen:require('ergogen').version} }), encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
+  cwd: root, input: JSON.stringify({ models, keyboard, adapter, panel, toolchain: {node:process.version,ergogen:require('ergogen').version} }), encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
 });
 if (result.stdout) process.stdout.write(result.stdout);
 if (result.stderr) process.stderr.write(result.stderr);

@@ -2,7 +2,7 @@
 
 const assert = require('node:assert/strict');
 const { parse, child, children, numbers, primitives } = require('./sexpr');
-const { samplePrimitive, distance } = require('./geometry');
+const { samplePrimitive, distance,circleThrough } = require('./geometry');
 
 function loops(edges) {
   const remaining = [...edges], result = [];
@@ -29,6 +29,7 @@ function boardModel(text) {
     const abs = p => [p[0] + at[0], p[1] + at[1]];
     return {
       name: fp[1], ref: children(fp, 'fp_text').find(t => t[1] === 'reference')[2], at,
+      side:child(fp,'layer')[1][0], value:children(fp,'fp_text').find(t=>t[1]==='value')?.[2]||'',
       cuts: loops(primitives(fp)).map(c => c.map(abs)),
       pads: children(fp, 'pad').map(p => ({
         number: p[1], type: p[2], shape: p[3], at: abs(numbers(p, 'at')),
@@ -36,7 +37,7 @@ function boardModel(text) {
         drill: child(p, 'drill')?.slice(1).filter(v => v !== 'oval').map(Number),
         net: child(p, 'net')?.[2] || null,
       })),
-      courtyard: children(fp, 'fp_rect').filter(r => child(r, 'layer')[1] === 'B.CrtYd')
+      courtyard: children(fp, 'fp_rect').filter(r => ['B.CrtYd','F.CrtYd'].includes(child(r, 'layer')[1]))
         .map(r => [abs(numbers(r, 'start')), abs(numbers(r, 'end'))]),
     };
   });
@@ -44,6 +45,7 @@ function boardModel(text) {
     .map(e => ({ type: e[0].slice(3), start: numbers(e, 'start'), end: numbers(e, 'end'),
       ...(e[0] === 'gr_arc' ? { mid: numbers(e, 'mid') } : {}) }));
   return { thickness: numbers(child(tree, 'general'), 'thickness')[0],
+    min_outline_radius_mm:Math.min(...edges.filter(e=>e.type==='arc').map(e=>circleThrough(e.start,e.mid,e.end).radius)),
     perimeter: loops(edges), footprints,
     tracks: children(tree, 'segment').length, vias: children(tree, 'via').length,
     zones: children(tree, 'zone').length };
@@ -60,6 +62,7 @@ function schematicNets(text) {
     join(pts[0], pts[1]);
   }
   const labels = children(tree, 'label');
+  const nc=new Set(children(tree,'no_connect').map(p=>coord(numbers(p,'at'))));
   for (const l of labels) join(coord(numbers(l, 'at').slice(0, 2)), `net:${l[1]}`);
   const named = new Map();
   for (const l of labels) {
@@ -78,6 +81,7 @@ function schematicNets(text) {
       const local = numbers(pin, 'at');
       const xy = [at[0] + local[0], at[1] - local[1]];
       const net = named.get(find(coord(xy)));
+      if(nc.has(coord(xy))) {assert(!net,`NC pin ${ref} is wired`);nets[ref][child(pin,'number')[1]]=null;continue;}
       assert(net, `Schematic unconnected pin ${ref}.${child(pin, 'number')[1]}`);
       nets[ref][child(pin, 'number')[1]] = net;
     }
@@ -90,8 +94,9 @@ function verifyElectrical(model, keys, sch) {
   assert.equal(model.thickness, 1.2, 'Expected 1.2 mm FR-4');
   assert.equal(model.tracks + model.vias + model.zones, 0, 'This revision is explicitly unrouted');
   const fp = new Map(model.footprints.map(f => [f.ref, f]));
-  assert.equal(fp.size, 40, 'Expected exactly 20 switches and 20 diodes');
-  assert.equal(Object.keys(sch).length, 40, 'Unexpected schematic population');
+  const {half}=require('./interface-hardware');
+  assert.equal(fp.size, 40+half.length, 'Unexpected matrix/interface population');
+  assert.equal(Object.keys(sch).length, 40+half.length, 'Unexpected schematic population');
   const pairs = new Set(), scan = new Set();
   for (const key of keys) {
     assert.notEqual(key.sense, key.sink, 'Charlieplex self-pair');
@@ -121,7 +126,24 @@ function verifyElectrical(model, keys, sch) {
   }
   assert.deepEqual([...scan].sort(), ['P0', 'P1', 'P2', 'P3', 'P4']);
   assert.equal(pairs.size, 5 * (5 - 1), 'Directed-pair coverage incomplete');
+  verifyInterface(model,half,sch);
   return { scan_nets: [...scan].sort(), directed_pairs: pairs.size, schematic_matches_pcb: true };
 }
 
-module.exports = { loops, boardModel, schematicNets, verifyElectrical };
+function verifyInterface(model,parts,sch) {
+  for(const part of parts) {
+    const f=model.footprints.find(f=>f.ref===part.ref);
+    assert(f,`Missing interface component ${part.ref}`);
+    assert.equal(f.name,'keyboard-design:'+part.kind);
+    assert(distance(f.at,part.at)<1e-5,`Interface placement ${part.ref}`);
+    const actual={};for(const p of f.pads) if(p.number) {
+      assert(!(p.number in actual),`Repeated interface pad ${part.ref}.${p.number}`);
+      actual[p.number]=p.net;
+    }
+    assert.deepEqual(actual,part.pins,`Interface pin/NC mismatch ${part.ref}`);
+    assert.deepEqual(sch[part.ref],part.pins,`Interface schematic/PCB mismatch ${part.ref}`);
+  }
+  return {components:parts.length,schematic_matches_pcb:true,unrouted:true};
+}
+
+module.exports = { loops, boardModel, schematicNets, verifyElectrical,verifyInterface };

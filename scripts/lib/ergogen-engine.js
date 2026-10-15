@@ -6,7 +6,7 @@ const ergogen = require('ergogen');
 const standard = require('ergogen/src/templates/kicad8');
 
 function configure() {
-  for (const name of ['choc', 'diode_sod123', 'ks33', 'mx']) {
+  for (const name of ['choc', 'diode_sod123', 'ks33', 'mx', 'interface_half', 'interface_adapter', 'mouse_bites']) {
     ergogen.inject('footprint', name, require(`../../ergogen/footprints/${name}`));
   }
   ergogen.inject('template', 'kicad8', {

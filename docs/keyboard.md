@@ -1,8 +1,10 @@
-# Identical Choc 5×4 half: basic matrix revision
+# Identical Choc 5×4 half and USB-C interface review
 
 The keyboard uses two copies of **one PCB design**, with both component sides up.
 There are 20 keys per half, 40 across the keyboard. The user's five-copy batch can
-therefore use a single design. Adapter, connector and controller design are deferred.
+therefore use a single half design. The requested USB-C breakaway adapter is now
+under review, with electrical blockers documented in
+[interface verification](usb-c-interface-verification.md). Native CAD contains the half, passive adapter and joined mouse-bite panel. All are unrouted.
 No board has been ordered or sent to a manufacturer.
 
 ## Geometry and handedness
@@ -24,17 +26,27 @@ have been added.
 | COL3 | 3 mm | index | ring | P3 |
 | COL4 | 0 mm | inner | pinky | P4 |
 
-The key centres and outer boundary are bilaterally symmetric. Each Choc footprint
+The key centres and main outline are bilaterally symmetric; connector details keep their fixed orientation. Each Choc footprint
 has an asymmetric pin/support pattern, so its artwork and holes are **not**
 mirrored. Identical PCBs need neither a backside flip nor a reversible footprint.
 Anatomical key mapping changes on the right-hand copy. References, diode polarity
 and physical scan wiring are identical on every manufactured copy.
 
-The rounded rectangular half is **103.25 × 92.20 mm**, retaining 4 mm outside the
-nominal key cells. Nominal board thickness is **1.2 mm**, two layers, 1 oz rigid
-FR-4. Width exceeds 100 mm; no promotional-price eligibility is assumed. The
+The shaped half bounding box is **98.20 × 88.20 mm**, reducing only the outer
+stationary frame. Actual cut-to-exterior land must meet the same 2.60 mm nominal /
+2.20 mm adverse guard used for stationary rails. Switch cuts and pitch are unchanged.
+Nominal board thickness is **1.2 mm**, two layers, 1 oz rigid FR-4.
+No promotional-price eligibility is assumed. The
 stock Ergogen KiCad 8 template is overridden by `npm run build:keyboard` so the
 actual emitted PCB, not only the notes, specifies 1.2 mm.
+
+The actual native panel is **98.20×99.475 mm**, with a shaped 60 mm-wide adapter
+nested in a central notch. Two 5 mm mouse-bite tabs each have five Ø0.60 mm holes
+at 1 mm pitch; nominal routed separation is 1.60 mm. Mount the XIAO on two six-pin
+headers **after depaneling**, overhanging the narrow carrier; omit D0/5V contacts.
+Proposed standoff ≥3 mm. Bare PCB size excludes the module/cable envelope. The
+upright USB-C ports are 9.3 mm tall. Actual geometry is in `panel-fit.svg`,
+`adapter.svg` and `choc5x4_panel.kicad_pcb`.
 
 ## Five-line charlieplex circuit
 
@@ -63,11 +75,24 @@ release the sink to input before switching phases. No scan line should be driven
 HIGH against another LOW output through pressed keys. This describes the circuit
 intent, not tested firmware or a drop-in conventional row/column scanner.
 
-Five GPIO per half is the confirmed **scan budget**. MCU pin numbers, transport,
-USB, reset, power and any extra functions are not allocated yet. These passive
-boards have no power circuit or selected connector. The adapter must keep their
-scan banks distinguishable; directly paralleling identical P0–P4 banks would
-alias matching keys.
+The selected **XIAO SAMD21** exposes D1–D5 to the left port and D6–D10 to the
+right. The adapter contains only XIAO headers, two full-24-contact USB4115-03-C
+ports, GPIO/contact isolation resistors and TPD1E05U06 TVS. No extra regulator,
+charge pump, reference, external pull-up or active protector. Normal XIAO USB
+handles PC connection/power. Both half boards are passive.
+
+Each socket groups A2+B2, A3+B3, A10+B10, A11+B11 and A8+B8, **after individual
+1k contact resistors**. Adapter logical order P3/P2/P1/P0/P4 compensates the fixed
+cable crossing in all four modeled plug orientations. All VBUS, CC, USB2 D+/D−
+and GND contacts are NC. Adapter shells/TVS return to MCU GND; half shells/TVS
+share SHIELD_H. Cable shell/ground bonding means this is not galvanic isolation.
+
+The full key loop is **6k**, including mandatory resistors and parallel cable
+branches. The minimum internal pull-up corner lacks guaranteed digital-low
+margin. Stock ZMK charlieplex digital scanning does not qualify this network.
+`npm run check:interface` writes the report and returns 2 while scan, rollover,
+powered/unpowered faults and ESD qualification remain open. Series resistance
+and TVS do not guarantee accidental-host safety. No final Gerbers are produced.
 
 **Electrical rollover is open.** One diode per key does not eliminate all
 forward multi-key paths. For example, pressing P0→P1 and P1→P2 can also produce a
@@ -103,7 +128,7 @@ from the earlier regular 3×3 arrangement.
 
 Separate upper/lower gasket and rib **2D concepts** are regenerated to match the
 staggered stationary grid. Moving-system envelopes follow the emitted contours,
-including locator scallops, with 0.30 mm gasket and 0.50 mm rib relief. The lower
+including locator scallops, with 0.30 mm gasket and 0.50 mm rib relief. Both faces clear the upper-left connector/passive bay. The lower
 plans also clear the diode courtyards and bodies. Small unsupported tongues that
 detach during the 1.30 mm opening screen are deliberately omitted; omitted areas
 are reported, and the checker rejects large omissions or lost perimeter pieces.
@@ -119,7 +144,7 @@ need hardware coupons, with the final switch SKU and laminate.
 ## Artifacts and verification
 
 Run `npm run review`. Outputs in `build/keyboard/` include the native-format
-schematic and unrouted PCB, matching footprint library, matrix CSV, exact key
+half/adapter schematics and three unrouted PCBs, matching footprint library, matrix CSV, exact key
 placements and offline SVG/PNG/HTML drawings. The PCB footprints carry matching
 schematic paths for later native CAD work. The schematic embeds its symbols.
 
@@ -131,7 +156,7 @@ checks, so stale generated keyboard files are refused.
 
 The [exact-input report](manufacturing-verification.md) records the result and
 hashes source and emitted PCB/schematic inputs. The [constraint register](manufacturing-limitations.md)
-contains findings K01–K09 and all prior footprint limitations. A geometric pass
+contains findings K01–K21 and all prior footprint limitations. A geometric pass
 is not native KiCad ERC/DRC, a routed copper check, CAM approval, fatigue life,
 switch fit or a confirmed quote. KiCad CLI is unavailable in this workspace;
 native load/save/ERC/DRC and export validation have not been performed.

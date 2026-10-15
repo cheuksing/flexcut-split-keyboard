@@ -26,7 +26,7 @@ test('electrical guard rejects a reversed diode and a five-net coverage collisio
   assert.throws(()=>verifyElectrical(model,self,sch),/self-pair/);
 });
 test('reader rejects an actual schematic short and a broken wire',()=>{
-  const short=text.slice(0,-1)+'\n(wire (pts (xy 17.78 187.96) (xy 43.18 187.96)) (stroke (width 0) (type default)) (uuid 00000000-0000-4000-a000-000000000000)))';
+  const short=text.trimEnd().slice(0,-1)+'\n(wire (pts (xy 17.78 187.96) (xy 43.18 187.96)) (stroke (width 0) (type default)) (uuid 00000000-0000-4000-a000-000000000000)))';
   assert.throws(()=>schematicNets(short),/Two schematic nets shorted|unconnected/);
   const broken=text.replace('(xy 25.4 187.96)','(xy 25.4 187.97)');
   assert.notEqual(broken,text,'Fixture must actually break a wire endpoint');

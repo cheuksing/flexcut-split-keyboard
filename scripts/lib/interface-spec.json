@@ -1,0 +1,115 @@
+{
+  "status": "AUTHORIZED_PINOUT_LAYOUT_REVIEW",
+  "controller": "Seeed Studio XIAO SAMD21 (original, not Plus)",
+  "zmk_board": "seeeduino_xiao//zmk",
+  "controller_scan_pins": {
+    "left": [
+      "D1",
+      "D2",
+      "D3",
+      "D4",
+      "D5"
+    ],
+    "right": [
+      "D6",
+      "D7",
+      "D8",
+      "D9",
+      "D10"
+    ]
+  },
+  "controller_mount": "two 1x6 headers; omit D0 and 5V; mount after depaneling",
+  "banks": 2,
+  "gpio_per_bank": 5,
+  "adapter_series_ohms": 1000,
+  "half_series_ohms": 1000,
+  "requested_pairs": [
+    [
+      "A2",
+      "B11"
+    ],
+    [
+      "A3",
+      "B10"
+    ],
+    [
+      "B2",
+      "A11"
+    ],
+    [
+      "B3",
+      "A10"
+    ],
+    [
+      "A8",
+      "B8"
+    ]
+  ],
+  "selected_pairs": [
+    [
+      "A2",
+      "B2"
+    ],
+    [
+      "A3",
+      "B3"
+    ],
+    [
+      "A10",
+      "B10"
+    ],
+    [
+      "A11",
+      "B11"
+    ],
+    [
+      "A8",
+      "B8"
+    ]
+  ],
+  "adapter_logical_order_by_connector_group": [
+    3,
+    2,
+    1,
+    0,
+    4
+  ],
+  "nc": [
+    "A1",
+    "A12",
+    "B1",
+    "B12",
+    "A4",
+    "A9",
+    "B4",
+    "B9",
+    "A5",
+    "B5",
+    "A6",
+    "B6",
+    "A7",
+    "B7"
+  ],
+  "sources": {
+    "cable": "https://www.usb.org/sites/default/files/USB%20Type-C%20Spec%20R2.0%20-%20August%202019_0.pdf",
+    "mcu": "https://ww1.microchip.com/downloads/aemDocuments/documents/MCU32/ProductDocuments/DataSheets/SAM-D21-DA1-Family-Data-Sheet-DS40001882.pdf",
+    "xiao": "https://wiki.seeedstudio.com/Seeeduino-XIAO/",
+    "zmk": "https://zmk.dev/docs/hardware",
+    "zmk_scanner": "https://github.com/zmkfirmware/zmk/blob/main/app/module/drivers/kscan/kscan_gpio_charlieplex.c",
+    "receptacle": "https://gct.co/files/drawings/usb4115.pdf"
+  },
+  "contact_series_ohms": 1000,
+  "samd21_input_screen": {
+    "vdd_volts": 3.3,
+    "pullup_ohms": [
+      20000,
+      40000,
+      60000
+    ],
+    "vil_max_fraction": 0.3,
+    "vih_min_fraction": 0.55,
+    "illustrative_diode_vf_volts": 0.6,
+    "illustrative_sink_volts": 0
+  },
+  "protection": "Passive only: per-contact isolation resistors, mandatory GPIO series resistors, TVS to shell/adapter ground. Not fault qualified."
+}

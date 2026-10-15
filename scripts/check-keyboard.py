@@ -56,6 +56,11 @@ def verify_keyboard(model, rules):
     cuts=unary_union(keycuts)
     require(cuts.geom_type=='MultiPolygon' and len(cuts.geoms)==2*count,'adjacent cuts overlap/merge')
     require(boundary.covers(cuts),'cut outside perimeter')
+    outline_land=cuts.distance(boundary.boundary)
+    require(outline_land>=spec['outline_cut_land_min_mm'],'cut to exterior stationary rail below nominal guard')
+    require(outline_land-2*rules['process']['routing_tolerance_mm']>=spec['outline_cut_land_adverse_min_mm'],'cut to exterior rail below adverse guard')
+    bx,by,bx2,by2=boundary.bounds
+    require(max(bx2-bx,by2-by)<spec['panel_max_exclusive_mm'],'half exceeds requested exclusive size limit')
     board=boundary.difference(cuts)
     require(board.is_valid and board.geom_type=='Polygon' and len(board.interiors)==2*count,'staggered board disconnected')
     rail=min(a.distance(b) for i,a in enumerate(keycuts) for b in keycuts[i+1:])
@@ -65,7 +70,7 @@ def verify_keyboard(model, rules):
     beams=board.buffer(-project['beam_connection_width_guard_mm']/2,quad_segs=32)
     require(beams.geom_type=='Polygon' and len(beams.interiors)==2*count,'both beam paths do not survive width screen')
     necks=board.buffer(-project['island_neck_width_guard_mm']/2,quad_segs=32)
-    corner=(boundary.bounds[0]+2,boundary.bounds[1]+2)
+    corner=(boundary.bounds[2]-2,boundary.bounds[1]+2)
     stationary=component(necks,corner)
     require(stationary is not None,'stationary grid core missing')
     for sw in switches:
@@ -82,6 +87,10 @@ def verify_keyboard(model, rules):
         require(rigid.covers(courtyard),'diode touches moving island / flex beam')
         require(courtyard.distance(cuts)>=project['component_courtyard_to_route_min_mm'],'diode assembly courtyard too near cut')
         courtyards.append(courtyard)
+    interface=[f for f in model['footprints'] if f not in switches and f not in diodes]
+    for f in interface:
+        for a,b in f['courtyard']:
+            require(rigid.covers(box(*a,*b)),'interface component touches a moving island / flex beam: '+f['ref'])
 
     drills=[]; copper=[]; diode_clearances=[]
     for f in model['footprints']:
@@ -118,6 +127,16 @@ def verify_keyboard(model, rules):
     web=min(a.distance(b) for i,a in enumerate(windows) for b in windows[i+1:])
     require(web>=project['gasket_unrelieved_web_min_mm'],'unrelieved gasket web too narrow')
     require(top.geom_type=='Polygon' and len(top.interiors)==count,'upper gasket sheet disconnected')
+    # The whole upper-left interface bay opens to the case edge. It clears the
+    # upright receptacle, underside contact resistors/TVS and protruding stakes.
+    # It is intentionally removed on both support faces, not supported on parts.
+    interface_courtyards=[box(*a,*b) for f in interface for a,b in f['courtyard']]
+    upper_bay=None
+    if interface_courtyards:
+        bay=unary_union(interface_courtyards).buffer(project['component_relief_clearance_mm'])
+        _,_,right,bottom_y=bay.bounds
+        upper_bay=box(boundary.bounds[0]-1,boundary.bounds[1]-1,right,bottom_y)
+        top=top.difference(upper_bay)
     relief=unary_union(courtyards).buffer(project['component_relief_clearance_mm'],quad_segs=32)
     bottom=top.difference(relief)
     # Deliberately cut away unsupported tongues in these gasket/rib concepts.
@@ -142,8 +161,10 @@ def verify_keyboard(model, rules):
     bottom=trim_tongues(bottom,'lower_gasket')
     require(bottom.is_valid and bottom.geom_type=='Polygon','relieved lower gasket sheet disconnected')
     ribwindows=unary_union([p.buffer(project['rib_edge_clearance_mm'],quad_segs=32) for p in envelopes])
-    upper_ribs=trim_tongues(boundary.difference(ribwindows),'upper_ribs')
-    lower_ribs=trim_tongues(boundary.difference(ribwindows).difference(relief),'lower_ribs')
+    ribbase=boundary.difference(ribwindows)
+    if upper_bay is not None:ribbase=ribbase.difference(upper_bay)
+    upper_ribs=trim_tongues(ribbase,'upper_ribs')
+    lower_ribs=trim_tongues(ribbase.difference(relief),'lower_ribs')
     require(upper_ribs.geom_type==lower_ribs.geom_type=='Polygon','rib plan disconnected')
     require(top.intersection(unary_union(envelopes)).area<1e-8,'upper gasket touches moving system')
     require(bottom.intersection(unary_union(envelopes)).area<1e-8,'lower gasket touches moving system')
@@ -155,12 +176,16 @@ def verify_keyboard(model, rules):
         'width_mm':bounds[2]-bounds[0],'height_mm':bounds[3]-bounds[1],
         'thickness_mm':model['thickness'],'cutouts':2*count,
         'min_shared_rail_mm':rail,'shared_rail_adverse_stack_mm':rail-2*tol,
+        'min_cut_to_outline_land_mm':outline_land,
+        'cut_to_outline_adverse_stack_mm':outline_land-2*tol,
         'min_diode_copper_to_route_mm':min(diode_clearances),
         'min_gasket_web_before_component_reliefs_mm':web,
         'min_hole_to_hole_mm':hole_gap,
         'drilled_half_connected':True,'adverse_half_connected':True,
         'two_beams_per_key_screen':True,'island_necks_screen':True,
         'diodes_on_stationary_grid':True,'support_sheets_connected':True,
+        'interface_on_stationary_grid':True,
+        'interface_case_bay_bounds':list(upper_bay.bounds) if upper_bay is not None else None,
         'support_tongues_deliberately_omitted':trimmed,
         'schematic_matches_pcb':True,'unrouted':True,
     }

@@ -9,9 +9,10 @@
     "build": "node scripts/build-footprints.js && npm run build:keyboard",
     "build:keyboard": "node scripts/build-keyboard.js",
     "test": "node --test tests/*.test.js",
+    "check:interface": "node scripts/check-interface.js",
     "check": "node scripts/invalidate-verification.js && npm run build && npm test && npm run manufacturing",
     "manufacturing": "node scripts/check-manufacturing.js",
-    "review": "npm run check && node scripts/build-review.js && node scripts/build-keyboard-review.js"
+    "review": "npm run check && node scripts/build-review.js && node scripts/build-keyboard-review.js && node scripts/build-panel-fit.js"
   },
   "engines": {
     "node": ">=22"
