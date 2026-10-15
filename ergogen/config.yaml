@@ -1,0 +1,62 @@
+# Footprint review fixture only. This is not the keyboard layout or schematic.
+# Run the whole folder so Ergogen loads footprints/: ergogen ergogen -o build/ergogen
+meta:
+  engine: 4.1.0
+  version: "0.1.0"
+
+points:
+  zones:
+    review:
+      anchor:
+        shift: [100, -100]
+      columns:
+        key:
+      rows:
+        only:
+
+# One independent review coupon per switch. The 27.05 mm square keeps
+# 6 mm between the nominal routed opening and the external edge.
+outlines:
+  coupon:
+    - what: rectangle
+      where: true
+      size: [27.05, 27.05]
+      fillet: 1.2
+
+pcbs:
+  ks33_review:
+    template: kicad8
+    outlines:
+      - outline: coupon
+    footprints:
+      switch:
+        what: ks33
+        where: true
+        params:
+          from: REVIEW_FROM
+          to: REVIEW_TO
+          show_cell: true
+  choc_review:
+    template: kicad8
+    outlines:
+      - outline: coupon
+    footprints:
+      switch:
+        what: choc
+        where: true
+        params:
+          from: REVIEW_FROM
+          to: REVIEW_TO
+          show_cell: true
+  mx_review:
+    template: kicad8
+    outlines:
+      - outline: coupon
+    footprints:
+      switch:
+        what: mx
+        where: true
+        params:
+          from: REVIEW_FROM
+          to: REVIEW_TO
+          show_cell: true

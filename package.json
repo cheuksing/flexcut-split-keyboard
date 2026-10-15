@@ -1,0 +1,13 @@
+{
+  "name": "keyboard-design",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Solder-only Ergogen switch footprints with per-key flex cuts",
+  "scripts": {
+    "build": "node scripts/build-footprints.js",
+    "test": "node --test tests/footprints.test.js",
+    "check": "npm run build && npm test",
+    "review": "node scripts/build-review.js"
+  },
+  "engines": { "node": ">=22" }
+}
