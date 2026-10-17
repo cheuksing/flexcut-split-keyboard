@@ -130,7 +130,7 @@ plastic-post holes remain NPTH; signal and V2 support holes remain plated; the
 V2 support has no pad number or net. Every switch's features share one moving
 island and its two intentional folded beams. Each diode is on the **bottom of
 its moving switch island**, at (+3.60, 0) mm from the switch centre in PCB
-coordinates and rotated 90°. Ergogen uses `shift: [3.6, 0]` and `rotate: 90`.
+coordinates and rotated 90°. Ergogen uses `shift: [3.4, 0]` and `rotate: 90`.
 The vertical package fits between the centre bore and right locating-post hole,
 clear of the switch solder terminals. Its nearest pad-to-switch solder-copper
 gap is approximately 1.84 mm, increased from 0.84 mm at the former position

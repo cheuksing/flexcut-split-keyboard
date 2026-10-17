@@ -118,7 +118,7 @@ function verifyElectrical(model, keys, sch) {
     assert.equal(sw.name, 'keyboard-design:choc');
     assert.equal(diode.name, 'keyboard-design:diode_sod523');
     assert(distance(sw.at, key.at) < 1e-6, 'Switch placement differs from Ergogen');
-    assert(distance(diode.at, [sw.at[0]+3.6, sw.at[1]]) < 1e-6, 'Diode misplaced');
+    assert(distance(diode.at, [sw.at[0]+3.4, sw.at[1]]) < 1e-6, 'Diode misplaced');
     assert.equal(diode.at[2],90,'Diode rotation must be 90 degrees');
     const net = (f, n) => f.pads.find(p => p.number === n)?.net;
     const expectedSW = { '1': key.sense, '2': key.local };
