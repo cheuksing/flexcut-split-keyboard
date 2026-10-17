@@ -139,7 +139,7 @@ pcbs:
         what: diode_sod523
         where: true
         adjust:
-          shift: [3.6, 0]
+          shift: [3.4, 0]
           rotate: 90
         params:
           anode: "K_{{column_net}}_{{row_net}}"
