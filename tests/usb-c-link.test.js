@@ -50,8 +50,9 @@ test('per-contact isolation adds 2k to the full two-leg cable loop',()=>{
 test('native sockets keep all USB2/power/CC/ground contacts NC and isolate every signal contact',()=>{
   const fs=require('node:fs'),path=require('node:path');
   const {boardModel}=require('../scripts/lib/keyboard');
-  for(const [file,ports] of [['choc5x4_half',[['JH1','H',false]]],['adapter',[['JL','L',true],['JR','R',true]]]]) {
-    const pcb=boardModel(fs.readFileSync(path.join(__dirname,'../build/keyboard',file+'.kicad_pcb'),'utf8'));
+  const views=require('../scripts/lib/board-views').readBoardViews(path.join(__dirname,'../build/keyboard'));
+  for(const [file,ports] of [['half',[['JH1','H',false]]],['adapter',[['JL','L',true],['JR','R',true]]]]) {
+    const pcb=boardModel(views[file]);
     for(const [ref,bank,isAdapter] of ports) {
       const socket=pcb.footprints.find(f=>f.ref===ref);
       assert.equal(socket.pads.filter(p=>/^[AB]\d+$/.test(p.number)).length,24);
@@ -75,5 +76,28 @@ test('native sockets keep all USB2/power/CC/ground contacts NC and isolate every
       }
     }
     assert(!pcb.footprints.some(f=>/LM7705|LM4040|ADG7421|LDO/.test(f.value)));
+  }
+});
+
+test('all generated assembly lands use the bottom face and USB-C contacts mirror physically',()=>{
+  const fs=require('node:fs'),path=require('node:path');
+  const {boardModel}=require('../scripts/lib/keyboard');
+  const views=require('../scripts/lib/board-views').readBoardViews(path.join(__dirname,'../build/keyboard'));
+  for(const file of ['half','adapter','panel']) {
+    const pcb=boardModel(views[file]);
+    for(const f of pcb.footprints) {
+      for(const p of f.pads.filter(p=>p.type==='smd')) {
+        assert.equal(f.side,'B',`${file}: assembly face ${f.ref}`);
+        assert.deepEqual(p.layers,['B.Cu','B.Paste','B.Mask'],`${file}: assembly layers ${f.ref}.${p.number}`);
+      }
+      if(f.name!=='keyboard-design:usb4115')continue;
+      // Manufacturer's component-side A1/B12 are at negative X. When fitted
+      // underneath, their top-view locations must be at positive X.
+      for(const [pin,dx,dy] of [['A1',2.75,-0.83],['A12',-2.75,-0.83],['B12',2.75,0.83],['B1',-2.75,0.83]]) {
+        const p=f.pads.find(p=>p.number===pin);
+        assert(Math.abs(p.at[0]-f.at[0]-dx)<1e-6,`${file}: mirrored ${f.ref}.${pin} X`);
+        assert(Math.abs(p.at[1]-f.at[1]-dy)<1e-6,`${file}: mirrored ${f.ref}.${pin} Y`);
+      }
+    }
   }
 });

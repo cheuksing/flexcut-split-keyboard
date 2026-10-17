@@ -1,10 +1,11 @@
 # Identical Choc 5×4 half and USB-C interface review
 
-The keyboard uses two copies of **one PCB design**, with both component sides up.
+The keyboard uses two copies of **one PCB design**, with both switch sides up.
 There are 20 keys per half, 40 across the keyboard. The user's five-copy batch can
 therefore use a single half design. The requested USB-C breakaway adapter is now
 under review, with electrical blockers documented in
-[interface verification](usb-c-interface-verification.md). Native CAD contains the half, passive adapter and joined mouse-bite panel. All are unrouted.
+[interface verification](usb-c-interface-verification.md). The sole native PCB contains the half and passive adapter joined by mouse-bite
+tabs. It is unrouted.
 No board has been ordered or sent to a manufacturer.
 
 ## Geometry and handedness
@@ -103,23 +104,40 @@ pull-up and MCU threshold tolerances, then validate simultaneous key presses.
 An ADC/comparator solution would require five suitable bidirectional sensing pins.
 No NKRO or ghost-free typing claim is made for the current circuit.
 
-Diodes use a bottom-side SOD-123 land pattern: pad centres ±1.65 mm, pads
-0.9×1.2 mm, courtyard 4.7×2.3 mm, following
-[KiCad's land dimensions](https://github.com/KiCad/kicad-footprints/blob/master/Diode_SMD.pretty/D_SOD-123.kicad_mod).
-The implementation is independently written; the candidate **1N4148W** is not a
-frozen electrical part. Confirm the purchased part's package and polarity.
+Diodes use a bottom-side SOD-523 land pattern: pad centres ±0.70 mm, pads
+0.60×0.70 mm, review courtyard 2.35×1.30 mm. The lands follow the
+[Diodes Inc. 1N4148WT data sheet](https://www.diodes.com/datasheet/download/1N4148WT.pdf).
+The candidate **1N4148WT** is not a frozen electrical part. Confirm the
+purchased part's package, polarity and assembly availability.
 These SMD pads have bottom paste apertures; Choc's plated solder pads retain their
 existing B.Cu/B.Mask-only layer set and no paste.
+
+All other assembled components on both the half and adapter, including the
+USB-C receptacles, GPIO/contact resistors and TVS diodes, occupy **B.Cu** with
+bottom paste apertures. The sockets' contact positions are mirrored for bottom
+mounting; nearby passives have been moved out of their assembly courtyards.
+The switches and XIAO are fitted separately from the top. This targets
+[JLCPCB Economic PCBA's single-side placement](https://jlcpcb.com/capabilities/pcb-assembly-capabilities).
+Exact stocked parts, bottom-side placement data, stencil, handling of the cut
+islands and connector eligibility still need assembly review once routing is
+complete. The 9.3 mm USB-C bodies now project below the PCB, so the lower case
+needs matching port access and depth.
 
 ## Flex, diodes and support
 
 All switches retain the generated Choc V1/V2 cuts, holes and copper. The V1
 plastic-post holes remain NPTH; signal and V2 support holes remain plated; the
 V2 support has no pad number or net. Every switch's features share one moving
-island and its two intentional folded beams. The diodes are on the **stationary
-horizontal grid**, displaced +5 mm X and +9.525 mm Y in PCB coordinates from their
-switches. Their complete assembly courtyards are checked against stationary
-material after island/beam separation.
+island and its two intentional folded beams. Each diode is on the **bottom of
+its moving switch island**, at (+3.60, 0) mm from the switch centre in PCB
+coordinates and rotated 90°. Ergogen uses `shift: [3.6, 0]` and `rotate: 90`.
+The vertical package fits between the centre bore and right locating-post hole,
+clear of the switch solder terminals. Its nearest pad-to-switch solder-copper
+gap is approximately 1.84 mm, increased from 0.84 mm at the former position
+between the centre bore and pad 2. This improves geometric separation for manual
+switch soldering; iron access, solder bridging and heat exposure need a physical
+assembly check. It crosses neither a cut nor another switch feature. Its courtyard is checked against those
+features and the island boundary.
 
 The complete 20-key emitted board is checked, including its 40 cutouts, actual
 drills, all neighbouring rails, both beam paths per key, island necks, and the
@@ -128,8 +146,10 @@ from the earlier regular 3×3 arrangement.
 
 Separate upper/lower gasket and rib **2D concepts** are regenerated to match the
 staggered stationary grid. Moving-system envelopes follow the emitted contours,
-including locator scallops, with 0.30 mm gasket and 0.50 mm rib relief. Both faces clear the upper-left connector/passive bay. The lower
-plans also clear the diode courtyards and bodies. Small unsupported tongues that
+including locator scallops, with 0.30 mm gasket and 0.50 mm rib relief. Both faces clear the upper-left connector/passive bay through a stepped relief
+that follows the component groups. All 20 switch windows remain enclosed in
+each final gasket and rib plan, including SW4 and SW8 next to the bay. The diode
+bodies fit within the same moving-island windows on both faces. Small unsupported tongues that
 detach during the 1.30 mm opening screen are deliberately omitted; omitted areas
 are reported, and the checker rejects large omissions or lost perimeter pieces.
 The resulting sheets remain connected. This is a geometric proposal, not proof
@@ -137,15 +157,25 @@ that all intended clamp loads are supported.
 
 Mounts, internal clamp nodes, full case Z geometry, gasket material/compression,
 solder access and 0.35–0.50 mm island hard stops still need mechanical design.
-The thinner lower support paths after diode relief need explicit review. Do not
-place case ribs or stops under free beams. Fatigue and neighbouring-key motion
+The candidate diode body can extend 0.65 mm below its mounting face before
+solder stand-off. Keep island hard stops outside the diode courtyard and provide
+clearance for the component plus island travel. Diode underside clearance and
+the resulting load paths need explicit review. Do not place case ribs or stops
+under free beams. Fatigue and neighbouring-key motion
 need hardware coupons, with the final switch SKU and laminate.
 
 ## Artifacts and verification
 
 Run `npm run review`. Outputs in `build/keyboard/` include the native-format
-half/adapter schematics and three unrouted PCBs, matching footprint library, matrix CSV, exact key
-placements and offline SVG/PNG/HTML drawings. The PCB footprints carry matching
+half/adapter schematics and **one unrouted PCB**, `choc5x4_panel.kicad_pcb`,
+plus the footprint library, matrix CSV, exact key placements and offline
+SVG/PNG/HTML drawings. `ergogen/config.yaml` contains only `pcbs.choc5x4_panel`;
+all switches, diodes, interfaces and tabs are placed once. The half and adapter
+are temporary review views made by copying exact panel footprint expressions
+and net IDs, then substituting their existing perimeter outlines.
+`board-outlines.json` records those derived perimeter edges. No separate half or
+adapter PCB is generated or maintained. Extraction rejects unassigned or duplicate
+components and routed copper until routing-aware depanel extraction is implemented. The PCB footprints carry matching
 schematic paths for later native CAD work. The schematic embeds its symbols.
 
 Checks trace wires, labels and actual embedded-symbol pins in the emitted
@@ -156,7 +186,7 @@ checks, so stale generated keyboard files are refused.
 
 The [exact-input report](manufacturing-verification.md) records the result and
 hashes source and emitted PCB/schematic inputs. The [constraint register](manufacturing-limitations.md)
-contains findings K01–K21 and all prior footprint limitations. A geometric pass
+contains findings K01–K26 and all prior footprint limitations. A geometric pass
 is not native KiCad ERC/DRC, a routed copper check, CAM approval, fatigue life,
 switch fit or a confirmed quote. KiCad CLI is unavailable in this workspace;
 native load/save/ERC/DRC and export validation have not been performed.

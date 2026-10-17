@@ -81,29 +81,46 @@ matrix+=txt('Electrical hold point: two-key forward paths can ghost; MCU thresho
 matrix+='</svg>';save('matrix',matrix);
 
 const support=JSON.parse(fs.readFileSync(path.join(out,'support-plan.json'),'utf8'));
+const detailKey=keys.find(k=>k.column===2&&k.row==='r2');
+const detailDiode=model.footprints.find(f=>f.ref===detailKey.diode);
+const [kx,ky]=detailKey.at,[dx,dy]=detailDiode.at;
+let detail=start(124,88);
+detail+=txt('DIODE INSIDE THE SWITCH ISLAND / TOP VIEW',62,9,3.6);
+detail+=`<defs><clipPath id="key-detail-clip"><rect x="7" y="18" width="64" height="64"/></clipPath></defs>`;
+detail+=`<g clip-path="url(#key-detail-clip)"><g transform="translate(7 18) scale(3.2) translate(${10-kx} ${10-ky})">${board()}`;
+detail+=`<rect x="${dx-.425}" y="${dy-.825}" width=".85" height="1.65" fill="#c057b6" stroke="#fff" stroke-width=".08"/></g></g>`;
+detail+=txt('Purple: bottom diode',76,29,2.6,'#dca0d3','start');
+detail+=txt('Blue: bottom copper',76,37,2.6,'#95aebc','start');
+detail+=txt('Gold: retained PCB',76,45,2.6,'#cab57b','start');
+detail+=txt('Black: holes and cuts',76,53,2.6,'#95aebc','start');
+detail+=txt('Diode centre: 3.60 mm',76,64,2.5,'#dbe6ed','start');
+detail+=txt('right of centre · 90°',76,70,2.5,'#dbe6ed','start');
+detail+=txt('2D review; diode height / hard stops / key feel need hardware validation',62,85,2,'#ffcc8f');
+detail+='</svg>';save('key-detail',detail,1500);
 let supports=start(260,258);
 supports+=txt('STATIONARY SUPPORT / 2D CONCEPTS ONLY',130,10,4.2);
-supports+=txt('Moving islands and both beams excluded · bottom parts relieved around diode bodies',130,18,2.6,'#95aebc');
+supports+=txt('Moving islands and beams excluded · diodes fit inside existing windows on both faces',130,18,2.6,'#95aebc');
 Object.entries(support.sheets).forEach(([name,g],i)=>{
   const ox=16+(i%2)*126,oy=34+Math.floor(i/2)*108;
   supports+=txt(name.replaceAll('_',' '),ox+width/2,oy-6,3);
   const d=ring(g.exterior)+' '+g.holes.map(ring).join(' ');
   supports+=`<g transform="translate(${ox-minX} ${oy-minY})"><path d="${d}" fill="#55b2a5" fill-rule="evenodd"/></g>`;
 });
-supports+=txt('Mounts / clamps / lower relief load paths / Z stackup / compression / hard stops remain open.',130,249,2.3,'#ffcc8f');
+supports+=txt('Mounts / clamps / diode underside clearance / Z stackup / hard stops remain open.',130,249,2.3,'#ffcc8f');
 supports+='</svg>';save('supports',supports);
 
 const k=check.keyboard;
 const html=`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Choc 5×4 matrix review</title>
 <style>body{font:16px/1.5 system-ui;margin:0;background:#101820;color:#dbe6ed}main{max-width:1400px;margin:auto;padding:24px}a{color:#93d8d0}nav{display:flex;gap:16px;flex-wrap:wrap}img{width:100%;height:auto}section{margin:32px 0}p{max-width:1000px}.status{color:#ffcc8f}table{border-collapse:collapse}td,th{border:1px solid #42535f;padding:8px 16px}h1{margin-bottom:8px}</style>
-<main><h1>Choc 5×4 · one identical half</h1><p>Use two copies component-side up. ${k.keys} switches and 20 bottom-side SOD-123 diodes per half; five scan nets. Right-hand anatomical columns reverse in firmware.</p>
+<main><h1>Choc 5×4 · one identical half</h1><p>Use two copies switch-side up. ${k.keys} switches and 20 bottom-side SOD-523 diodes per half; five scan nets. Right-hand anatomical columns reverse in firmware. All pick-and-place SMD parts on the half and adapter are bottom-side.</p>
 <p class="status">PASS WITH OPEN REVIEWS — geometry and parsed schematic connectivity only. Unrouted; native KiCad ERC/DRC, charlieplex multi-key electrical margins, complete case and electrical qualification remain open.</p>
-<nav><a href="#layout">Layout</a><a href="#matrix">Circuit</a><a href="#support">Support concept</a><a href="panel-fit.svg">Actual breakaway panel</a><a href="adapter.kicad_pcb">Adapter PCB</a><a href="adapter.kicad_sch">Adapter schematic</a><a href="choc5x4_panel.kicad_pcb">Panel PCB</a><a href="choc5x4_half.kicad_pcb">KiCad PCB</a><a href="choc5x4_half.kicad_sch">KiCad schematic</a><a href="matrix.csv">Net map CSV</a><a href="../review/index.html">Footprints</a></nav>
+<p>The panel is the sole PCB output. Half and adapter views are extracted from it; each footprint is defined once.</p>
+<nav><a href="#layout">Layout</a><a href="#matrix">Circuit</a><a href="#support">Support concept</a><a href="panel-fit.svg">Actual breakaway panel</a><a href="adapter.kicad_sch">Adapter schematic</a><a href="choc5x4_panel.kicad_pcb">Panel PCB</a><a href="choc5x4_half.kicad_sch">KiCad schematic</a><a href="matrix.csv">Net map CSV</a><a href="../review/index.html">Footprints</a></nav>
 <section id="layout"><h2>Same PCB for either hand</h2><img src="layout.svg" alt="Two identical 5 by 4 PCBs with symmetric cumulative staggers"><p>Rows follow the supplied Ergogen order: r3 bottom, r0 top. Dashed outlines are 15 mm switch-body guides; they are not plate cuts. Blue copper is on the underside; top copper is red. Both are shown to review clearances. Individual Choc pin and cut patterns keep their orientation.</p></section>
 <section><h2>Nested adapter and mouse-bite panel</h2><img src="panel-fit.svg" alt="Actual half and adapter native PCB with two mouse-bite tabs"><img src="adapter.svg" alt="Simple passive XIAO adapter layout"><p>The adapter exposes two independent XIAO SAMD21 five-GPIO banks through upright USB4115-03-C ports. It has series and per-contact isolation resistors and TVS only. Mount the XIAO on two six-pin headers after depaneling; the module overhangs the carrier. No extra regulator or active protection IC. Scan reliability, GPIO fault limits, ESD and hot-plug remain unqualified.</p></section>
 <section id="matrix"><h2>Twenty directed pairs</h2><img src="matrix.svg" alt="Every switch and diode connected between a distinct ordered pair of P0 through P4"><p>Only P0–P4 are electrical scan lines. One line is driven low at a time; the other lines are pulled-up inputs. Release the previous sink before selecting another. This is a circuit review, not tested firmware. Series diodes alone do not prove rollover: P0→P1 plus P1→P2 can appear as P0→P2. Controller and diode selection need voltage-margin and multi-key tests.</p></section>
 <section><h2>Measured geometry</h2><table><tr><th>Half outline</th><td>${k.width_mm.toFixed(2)} × ${k.height_mm.toFixed(2)} mm</td></tr><tr><th>Nominal thickness</th><td>1.2 mm</td></tr><tr><th>Minimum stationary rail</th><td>${k.min_shared_rail_mm.toFixed(3)} mm</td></tr><tr><th>Cut-to-exterior land</th><td>${k.min_cut_to_outline_land_mm.toFixed(3)} mm</td></tr><tr><th>Adverse rail screen</th><td>${k.shared_rail_adverse_stack_mm.toFixed(3)} mm</td></tr><tr><th>Upper gasket web before trimming</th><td>${k.min_gasket_web_before_component_reliefs_mm.toFixed(3)} mm</td></tr></table><p>The actual half-plus-adapter panel is ${check.panel.width_mm.toFixed(2)} × ${check.panel.height_mm.toFixed(3)} mm. USB-C orientation mapping passes the ideal cable model; scanning and fault protection remain on electrical hold. No promotional price is confirmed. Input SHA-256: <code>${check.input_sha256}</code>.</p></section>
-<section id="support"><h2>Support sheets follow the new stationary grid</h2><img src="supports.svg" alt="Upper and lower continuous gasket and rib concepts with moving-system exclusions"><p>Both faces clear the upper-left USB-C interface bay; lower plans also include diode-body relief. Small unsupported tongues are deliberately cut away after the 1.30 mm opening screen; omitted areas are recorded in the verification report. These 2D concepts do not define materials, mount holes, clamp nodes, case heights, hard stops or compression. Reduced lower support coverage needs mechanical review.</p></section>
+<section id="support"><h2>Support sheets follow the stationary grid</h2><img src="key-detail.svg" alt="Enlarged switch island with a vertical bottom diode to the right of the center bore, between the bore and locating-post hole"><img src="supports.svg" alt="Upper and lower continuous gasket and rib concepts with moving-system exclusions"><p>Both faces clear the upper-left USB-C interface bay. The diodes fit within the existing moving-island windows, so no separate lower switch-area reliefs are needed. Small unsupported tongues are deliberately cut away after the 1.30 mm opening screen; omitted areas are recorded in the verification report. These 2D concepts do not define materials, mount holes, clamp nodes, case heights, hard stops or compression. Diode underside clearance and measured keypress consistency need mechanical review.</p></section>
 <p>Generated offline from emitted CAD. No manufacturer submission, order, CAM review or native KiCad validation was performed.</p></main></html>`;
 fs.writeFileSync(path.join(out,'index.html'),html+'\n');
 console.log('Keyboard review: build/keyboard/index.html; layout, matrix and support SVG/PNG drawings');

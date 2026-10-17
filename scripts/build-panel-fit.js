@@ -10,8 +10,9 @@ const p=check.panel;
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;');
 const text=(s,x,y,size=2.6,color='#dbe6ed')=>`<text x="${x}" y="${y}" font-family="Arial,sans-serif" font-size="${size}" fill="${color}">${esc(s)}</text>`;
 function save(name,svg){fs.writeFileSync(path.join(out,name+'.svg'),svg+'\n');fs.writeFileSync(path.join(out,name+'.png'),new Resvg(svg,{fitTo:{mode:'width',value:1800}}).render().asPng());}
-const panel=pcbPreview(fs.readFileSync(path.join(out,'choc5x4_panel.kicad_pcb'),'utf8'));
-const adapter=pcbPreview(fs.readFileSync(path.join(out,'adapter.kicad_pcb'),'utf8'));
+const views=require('./lib/board-views').readBoardViews(out);
+const panel=pcbPreview(views.panel);
+const adapter=pcbPreview(views.adapter);
 function nested(svg,x,y,w,h){return svg.replace('<svg ',`<svg x="${x}" y="${y}" `).replace(/width="[^"]+" height="[^"]+"/,`width="${w}" height="${h}"`);}
 let svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 156 168" width="156mm" height="168mm"><rect width="156" height="168" fill="#101820"/>';
 svg+=text('5×4 HALF + PASSIVE BREAKAWAY ADAPTER',8,10,4);

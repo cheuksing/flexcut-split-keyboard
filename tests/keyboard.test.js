@@ -9,12 +9,27 @@ const out=path.join(__dirname,'../build/keyboard');
 let model,keys,sch,text,pcb;
 before(async()=>{
   await build();
-  pcb=fs.readFileSync(path.join(out,'choc5x4_half.kicad_pcb'),'utf8');
+  pcb=require('../scripts/lib/board-views').readBoardViews(out).half;
   model=boardModel(pcb); keys=JSON.parse(fs.readFileSync(path.join(out,'keys.json'),'utf8'));
   text=fs.readFileSync(path.join(out,'choc5x4_half.kicad_sch'),'utf8'); sch=schematicNets(text);
 });
 test('actual schematic connectivity agrees with all 20 directed PCB circuits',()=>{
   assert.deepEqual(verifyElectrical(model,keys,sch).scan_nets,['P0','P1','P2','P3','P4']);
+});
+test('rotated diode geometry preserves cathode/anode direction, pad sizes and courtyard',()=>{
+  const diode=require('../ergogen/footprints/diode_sod523');
+  const {parameters}=require('../scripts/lib/sexpr');
+  const fixture=diode.body(parameters(diode,{at:'(at 10 20 90)',r:90,ref:'DTEST',
+    anode:'(net 1 "A")',cathode:'(net 2 "K")'}));
+  const f=boardModel('(kicad_pcb (general (thickness 1.2)) '+fixture+')').footprints[0];
+  const close=(actual,expected)=>actual.forEach((v,i)=>assert(Math.abs(v-expected[i])<1e-9));
+  close(f.pads[0].at,[10,20.7]);close(f.pads[1].at,[10,19.3]);
+  assert.deepEqual(f.pads.map(p=>p.net),['K','A']);
+  for(const p of f.pads)assert.deepEqual(p.size,[.7,.6]);
+  close(f.courtyard[0][0],[9.35,18.825]);close(f.courtyard[0][1],[10.65,21.175]);
+  const misplaced=structuredClone(model);
+  misplaced.footprints.find(f=>f.ref==='D1').at[2]=0;
+  assert.throws(()=>verifyElectrical(misplaced,keys,sch),/Diode rotation/);
 });
 test('electrical guard rejects a reversed diode and a five-net coverage collision',()=>{
   const reversed=structuredClone(model),d=reversed.footprints.find(f=>f.ref==='D1');

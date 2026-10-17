@@ -122,38 +122,8 @@ outlines:
         shift: [18.10, -20.20]
       size: [5, 2.20]
       fillet: 0.60
+# One PCB output: half + adapter + tabs. Review views are extracted from it.
 pcbs:
-  choc5x4_half:
-    template: kicad8
-    outlines:
-      - outline: half
-    footprints:
-      switches:
-        what: choc
-        where: true
-        params:
-          from: "{{scan_from}}"
-          to: "K_{{column_net}}_{{row_net}}"
-      diodes:
-        what: diode_sod123
-        where: true
-        # Stationary horizontal rail, away from moving island and beams.
-        adjust:
-          shift: [5, -pitch / 2]
-        params:
-          anode: "K_{{column_net}}_{{row_net}}"
-          cathode: "{{scan_to}}"
-      interface:
-        what: interface_half
-        where: matrix_middle_r3
-  adapter:
-    template: kicad8
-    outlines:
-      - outline: adapter
-    footprints:
-      interface:
-        what: interface_adapter
-        where: matrix_middle_r3
   choc5x4_panel:
     template: kicad8
     outlines:
@@ -166,10 +136,11 @@ pcbs:
           from: "{{scan_from}}"
           to: "K_{{column_net}}_{{row_net}}"
       diodes:
-        what: diode_sod123
+        what: diode_sod523
         where: true
         adjust:
-          shift: [5, -pitch / 2]
+          shift: [3.6, 0]
+          rotate: 90
         params:
           anode: "K_{{column_net}}_{{row_net}}"
           cathode: "{{scan_to}}"

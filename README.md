@@ -1,14 +1,18 @@
 # Choc 5×4 split keyboard
 
-One identical 20-key half-PCB design, used twice component-side up. The key field
+One identical 20-key half-PCB design, used twice switch-side up. The key field
 is symmetric: cumulative column heights **0, 3, 8, 3, 0 mm**, with **19.05 mm**
 pitch. Each half uses the generated solder-only **Choc V1/V2 flex footprint**,
-20 bottom-side SOD-123 diodes and **five charlieplex scan nets**. The right-hand
+20 bottom-side SOD-523 diodes and **five charlieplex scan nets**. The right-hand
 anatomical columns reverse; the physical Choc pin patterns do not flip.
 
-Current CAD includes the **unrouted half, simple XIAO SAMD21 adapter and actual
-98.20×99.475 mm breakaway panel**. The adapter has headers, two upright USB-C
-ports, series/contact isolation resistors and TVS only. No extra regulator or
+The sole PCB definition and output is **`choc5x4_panel`**, the unrouted
+98.20×99.475 mm breakaway panel containing one half and the XIAO SAMD21 adapter.
+Each component placement is defined once. Checks and drawings extract the half
+and adapter directly from this panel. The adapter has headers, two upright USB-C
+ports, series/contact isolation resistors and TVS only. All SMD assembly parts,
+including the ports and matrix diodes, are on the bottom; switches and the XIAO
+are fitted separately on top. No extra regulator or
 active protector. Selected USB-C groups preserve identity in all four modeled
 plug orientations. Scan margins, rollover and powered/unpowered fault safety
 remain on [electrical hold](docs/usb-c-interface-verification.md).
@@ -49,16 +53,15 @@ The following are local review artifacts; the workflow uses no browser or GUI:
 
 - [Keyboard review](build/keyboard/index.html), [layout PNG](build/keyboard/layout.png),
   [matrix PNG](build/keyboard/matrix.png), [support concepts](build/keyboard/supports.png).
-- [KiCad PCB](build/keyboard/choc5x4_half.kicad_pcb) and
-  [KiCad schematic](build/keyboard/choc5x4_half.kicad_sch).
+- [Panel KiCad PCB](build/keyboard/choc5x4_panel.kicad_pcb) and
+  [half schematic](build/keyboard/choc5x4_half.kicad_sch).
 - [Directed-pair CSV](build/keyboard/matrix.csv) and [key placements](build/keyboard/keys.json).
 - [All three switch footprints](build/review/index.html) and their generated
   `build/review/SwitchFlex.pretty/` library.
 - [Exact-input verification](docs/manufacturing-verification.md) and
   [constraint register](docs/manufacturing-limitations.md).
 - [Actual panel](build/keyboard/panel-fit.svg), [adapter placement](build/keyboard/adapter.svg),
-  [panel PCB](build/keyboard/choc5x4_panel.kicad_pcb), [adapter PCB](build/keyboard/adapter.kicad_pcb)
-  and [adapter schematic](build/keyboard/adapter.kicad_sch).
+  [adapter schematic](build/keyboard/adapter.kicad_sch).
   Mount the XIAO on two six-pin headers after detaching the adapter; the module overhangs the carrier.
 
 
@@ -81,13 +84,14 @@ recreated with `npm run review`.
 ## Design sources
 
 ```text
-ergogen/config.yaml               Single identical 5×4 half; user stagger and row order
+ergogen/config.yaml               Sole panel PCB definition; shared half/adapter outlines
 ergogen/footprints/choc.js         Generated Choc V1/V2 footprint, unchanged pin/cut geometry
-ergogen/footprints/diode_sod123.js  Bottom-side diode land pattern; candidate SKU pending
+ergogen/footprints/diode_sod523.js  Bottom-side diode land pattern; candidate SKU pending
 ergogen/fixtures/                  Preserved original single-key coupon configuration
 scripts/build-keyboard.js          Ergogen runner, thickness, CAD, net map and local library
 scripts/lib/keyboard-schematic.js  Embedded-symbol KiCad matrix schematic generator
 scripts/lib/keyboard.js            Readers and electrical connectivity checks
+scripts/lib/board-views.js         Extract half/adapter review geometry from the panel
 scripts/check-keyboard.py          Actual staggered-board and support geometry screens
 scripts/lib/manufacturing-rules.json  Numeric fabrication/project guards
 scripts/build-keyboard-review.js   Offline SVG/PNG/HTML keyboard review

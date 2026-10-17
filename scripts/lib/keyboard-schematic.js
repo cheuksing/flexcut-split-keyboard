@@ -23,7 +23,7 @@ function library() {
         (polyline (pts (xy -2.54 0.508) (xy 2.54 2.032)) (stroke (width 0.254) (type default)) (fill (type none))))
       (symbol "ChocSwitch_1_1" ${pin('1','1',-5.08,0,2.032)} ${pin('2','2',5.08,180,2.032)}))
     (symbol "Keyboard:Diode" (pin_names (offset 0) hide) (in_bom yes) (on_board yes)
-      ${property('Reference', 'D', 3.81)} ${property('Value', '1N4148W', -3.81)}
+      ${property('Reference', 'D', 3.81)} ${property('Value', '1N4148WT', -3.81)}
       (symbol "Diode_0_1"
         (polyline (pts (xy -1.27 -1.27) (xy -1.27 1.27) (xy 1.27 0) (xy -1.27 -1.27))
           (stroke (width 0.254) (type default)) (fill (type none)))
@@ -62,7 +62,7 @@ function schematic(keys) {
   for (const k of keys) {
     const x=12.7+k.column*76.2, y=50.8+Number(k.row.slice(1))*45.72;
     instance('ChocSwitch',k.switch,'Choc V1/V2','keyboard-design:choc',x+17.78,y);
-    instance('Diode',k.diode,'1N4148W (candidate)','keyboard-design:diode_sod123',x+43.18,y);
+    instance('Diode',k.diode,'1N4148WT (candidate)','keyboard-design:diode_sod523',x+43.18,y);
     // Each label is at a wire endpoint, so the connectivity checker need not
     // infer intersections or mid-wire labels.
     wire(x+5.08,y,x+12.7,y,k.id+'-sense'); label(k.sense,x+5.08,y,k.id+'-sense-label');

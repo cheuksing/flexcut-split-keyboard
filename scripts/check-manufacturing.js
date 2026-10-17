@@ -25,12 +25,13 @@ require('./build-footprints').build(true); // Refuse to check stale generated fi
 const keyboardBuild = spawnSync(process.execPath, [path.join(__dirname,'build-keyboard.js'),'--check'], {cwd:root,encoding:'utf8'});
 if (keyboardBuild.status !== 0) throw new Error(`Stale/invalid keyboard outputs; run npm run check.\n${keyboardBuild.stdout}\n${keyboardBuild.stderr}`);
 const {boardModel,schematicNets,verifyElectrical,verifyInterface}=require('./lib/keyboard');
-const keyboard=boardModel(fs.readFileSync(path.join(root,'build/keyboard/choc5x4_half.kicad_pcb'),'utf8'));
+const views=require('./lib/board-views').readBoardViews(path.join(root,'build/keyboard'));
+const keyboard=boardModel(views.half);
 keyboard.keys=JSON.parse(fs.readFileSync(path.join(root,'build/keyboard/keys.json'),'utf8'));
 keyboard.electrical=verifyElectrical(keyboard,keyboard.keys,schematicNets(fs.readFileSync(path.join(root,'build/keyboard/choc5x4_half.kicad_sch'),'utf8')));
-const adapter=boardModel(fs.readFileSync(path.join(root,'build/keyboard/adapter.kicad_pcb'),'utf8'));
+const adapter=boardModel(views.adapter);
 adapter.electrical=verifyInterface(adapter,require('./lib/interface-hardware').adapter,schematicNets(fs.readFileSync(path.join(root,'build/keyboard/adapter.kicad_sch'),'utf8')));
-const panel=boardModel(fs.readFileSync(path.join(root,'build/keyboard/choc5x4_panel.kicad_pcb'),'utf8'));
+const panel=boardModel(views.panel);
 const assert=require('node:assert/strict');
 const panelParts=panel.footprints.filter(f=>f.name!=='keyboard-design:mouse_bites');
 assert.equal(new Set(panelParts.map(f=>f.ref)).size,panelParts.length,'Duplicate panel reference');

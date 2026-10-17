@@ -40,15 +40,13 @@ test('real Ergogen generation includes custom Choc flex cuts, five-net pads and 
   assert.equal(result.ok,true);assert.equal(result.status,'preview-only');
   assert.equal(result.points.length,20);
   assert.equal(new Set(result.points.map(p=>`${p.sense}>${p.sink}`)).size,20);
-  assert.equal(result.pcbs[0].footprints,61);assert.equal(result.pcbs[0].drills,126);
-  assert.equal(result.pcbs.length,3);
-  assert.equal(result.pcbs[1].footprints,43);
-  assert.equal(result.pcbs[2].footprints,106);
-  assert.equal(result.pcbs[2].widthMm,98.2);assert.equal(result.pcbs[2].heightMm,99.475);
+  assert.equal(result.pcbs.length,1);
+  assert.equal(result.pcbs[0].name,'choc5x4_panel');
+  assert.equal(result.pcbs[0].footprints,106);assert.equal(result.pcbs[0].drills,160);
   assert.equal(result.pcbs[0].thicknessMm,1.2);
-  assert.equal(result.pcbs[0].widthMm,98.2);assert.equal(result.pcbs[0].heightMm,88.2);
-  for(const id of ['points','points-dxf','outline:half','outline-dxf:half','pcb:choc5x4_half','pcb-svg:choc5x4_half','points-json']) assert(result.assets.some(a=>a.id===id));
-  const pcb=result.assets.find(a=>a.id==='pcb:choc5x4_half');
+  assert.equal(result.pcbs[0].widthMm,98.2);assert.equal(result.pcbs[0].heightMm,99.475);
+  for(const id of ['points','points-dxf','outline:half','outline-dxf:half','pcb:choc5x4_panel','pcb-svg:choc5x4_panel','points-json']) assert(result.assets.some(a=>a.id===id));
+  const pcb=result.assets.find(a=>a.id==='pcb:choc5x4_panel');
   assert.match(pcb.svg,/A /);assert.match(pcb.svg,/#2563eb/);assert.match(pcb.svg,/SW20/);
   const switches=children(parse(pcb.content),'footprint').filter(f=>f[1]==='keyboard-design:choc');
   assert.equal(switches.length,20);
@@ -65,7 +63,7 @@ test('draft changes generate fresh geometry but never save the project file',asy
   const r=await post(config.replace('pitch: 19.05','pitch: 20'));
   assert.equal(r.status,200);const result=await r.json();
   assert.equal(result.pcbs[0].widthMm,102.95);
-  assert.equal(result.pcbs[0].heightMm,92);
+  assert.equal(result.pcbs[0].heightMm,102.8);
   assert.equal(await fs.readFile(path.join(root,'ergogen/config.yaml'),'utf8'),config);
 });
 test('bad YAML and unsupported JS return errors; a later valid preview still works',async()=>{
@@ -123,7 +121,7 @@ test('editor interactions generate drafts, recover from errors, export the match
     await waitFor(()=>$('status').dataset.state==='ready','initial preview');
     assert.equal($('config').value,config);
     assert.equal($('key-count').textContent,'20');assert.equal($('point-rows').children.length,20);
-    assert.equal($('view-select').value,'pcb:choc5x4_half');
+    assert.equal($('view-select').value,'pcb:choc5x4_panel');
     assert.equal($('preview-image').hidden,false);assert.equal($('download-output').disabled,false);
     $('zoom-in').click();assert.equal($('zoom-level').textContent,'125%');
     $('fit-view').click();assert.equal($('zoom-level').textContent,'100%');
@@ -135,9 +133,9 @@ test('editor interactions generate drafts, recover from errors, export the match
     assert.equal($('status').dataset.state,'stale');assert.equal($('download-output').disabled,true);
     assert.equal($('stale-note').hidden,false);
     $('generate').click();await waitFor(()=>$('status').dataset.state==='ready','edited preview');
-    assert.equal($('pcb-size').textContent,'102.95 × 92.00 mm');
-    $('download-select').value='pcb:choc5x4_half';$('download-output').click();
-    assert.equal(downloads.at(-1).name,'choc5x4_half.kicad_pcb');
+    assert.equal($('pcb-size').textContent,'102.95 × 102.80 mm');
+    $('download-select').value='pcb:choc5x4_panel';$('download-output').click();
+    assert.equal(downloads.at(-1).name,'choc5x4_panel.kicad_pcb');
     assert.match(await (await fetch(downloads.at(-1).href)).text(),/\(thickness 1\.2\)/);
     $('download-config').click();assert.equal(downloads.at(-1).name,'config.yaml');
     assert.equal(await (await fetch(downloads.at(-1).href)).text(),$('config').value);
@@ -148,7 +146,7 @@ test('editor interactions generate drafts, recover from errors, export the match
     $('config').value=config;$('config').dispatchEvent(new window.Event('input'));$('generate').click();
     await waitFor(()=>$('status').dataset.state==='ready','error recovery');
     assert.equal($('error-panel').hidden,true);assert.equal($('stale-note').hidden,true);
-    assert.equal($('pcb-size').textContent,'98.20 × 88.20 mm');
+    assert.equal($('pcb-size').textContent,'98.20 × 99.47 mm');
   } finally {
     for(const timer of timers) clearTimeout(timer);
     for(const image of [document.getElementById('preview-image').src,...downloads.map(d=>d.href)]) if(image?.startsWith('blob:')) URL.revokeObjectURL(image);

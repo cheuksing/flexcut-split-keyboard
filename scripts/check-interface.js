@@ -6,14 +6,16 @@ const {analyze}=require('./lib/usb-c-link');
 const {boardModel,schematicNets,verifyElectrical,verifyInterface}=require('./lib/keyboard');
 const root=path.resolve(__dirname,'..'),result=analyze(spec);
 const read=name=>fs.readFileSync(path.join(root,name),'utf8');
-const half=boardModel(read('build/keyboard/choc5x4_half.kicad_pcb'));
-const adapter=boardModel(read('build/keyboard/adapter.kicad_pcb'));
+const views=require('./lib/board-views').readBoardViews(path.join(root,'build/keyboard'));
+const half=boardModel(views.half);
+const adapter=boardModel(views.adapter);
 const keys=JSON.parse(read('build/keyboard/keys.json'));
 result.cad={half:verifyElectrical(half,keys,schematicNets(read('build/keyboard/choc5x4_half.kicad_sch'))),
   adapter:verifyInterface(adapter,hardware.adapter,schematicNets(read('build/keyboard/adapter.kicad_sch')))};
 result.checks.actual_interface_in_cad=true;
 const inputs=['scripts/lib/interface-spec.json','scripts/lib/interface-hardware.js','scripts/lib/usb-c-link.js','scripts/check-interface.js',
-  'build/keyboard/choc5x4_half.kicad_pcb','build/keyboard/choc5x4_half.kicad_sch','build/keyboard/adapter.kicad_pcb','build/keyboard/adapter.kicad_sch'];
+  'scripts/lib/board-views.js','build/keyboard/choc5x4_panel.kicad_pcb','build/keyboard/board-outlines.json',
+  'build/keyboard/choc5x4_half.kicad_sch','build/keyboard/adapter.kicad_sch'];
 const hash=crypto.createHash('sha256');for(const f of inputs){hash.update(f);hash.update(read(f));}
 result.input_sha256=hash.digest('hex');
 fs.mkdirSync(path.join(root,'build/interface'),{recursive:true});

@@ -248,8 +248,8 @@ inputs += sorted((ROOT/"scripts").glob("*.js"))
 inputs += [ROOT/"scripts/check-manufacturing.py", ROOT/"package.json"]
 inputs += [ROOT/'scripts/check-keyboard.py', ROOT/'scripts/check-panel.py', ROOT/'ergogen/config.yaml', ROOT/'package-lock.json',
            ROOT/'scripts/requirements-manufacturing.txt',
-           ROOT/'build/keyboard/choc5x4_half.kicad_pcb', ROOT/'build/keyboard/choc5x4_half.kicad_sch',
-           ROOT/'build/keyboard/keys.json', ROOT/'build/keyboard/adapter.kicad_pcb', ROOT/'build/keyboard/adapter.kicad_sch', ROOT/'build/keyboard/choc5x4_panel.kicad_pcb']
+           ROOT/'build/keyboard/choc5x4_half.kicad_sch', ROOT/'build/keyboard/board-outlines.json',
+           ROOT/'build/keyboard/keys.json', ROOT/'build/keyboard/adapter.kicad_sch', ROOT/'build/keyboard/choc5x4_panel.kicad_pcb']
 digest = hashlib.sha256()
 toolchain = {**PAYLOAD['toolchain'], 'python':sys.version.split()[0], 'shapely':shapely.__version__}
 digest.update(json.dumps(toolchain,sort_keys=True).encode())
@@ -281,17 +281,20 @@ if keyboard_result:
     k=keyboard_result
     lines += ['', '## Full 5×4 Choc half-board', '',
               f"- Actual outline: **{k['width_mm']:.2f} × {k['height_mm']:.2f} mm**, {k['thickness_mm']:.1f} mm nominal FR-4.",
-              '- One identical PCB is used twice, component side up; 20 switches + 20 bottom-side SOD-123 diodes per PCB.',
+              '- One identical PCB is used twice, switch side up; 20 switches + 20 bottom-side SOD-523 diodes per PCB.',
               '- Five scan nets cover all 20 directed pairs. Parsed schematic wire/pin connectivity matches emitted PCB pads.',
               f"- All 40 internal cutouts remain separate; both beams/key, rigid island necks, actual drilled half and adverse route/drill screen pass.",
               f"- Minimum actual staggered stationary rail: **{k['min_shared_rail_mm']:.3f} mm**; adverse two-edge screen **{k['shared_rail_adverse_stack_mm']:.3f} mm**.",
               f"- Minimum cut-to-exterior stationary land: **{k['min_cut_to_outline_land_mm']:.3f} mm**; adverse two-edge screen **{k['cut_to_outline_adverse_stack_mm']:.3f} mm**.",
-              f"- Diodes lie on stationary material; minimum diode copper/edge clearance **{k['min_diode_copper_to_route_mm']:.3f} mm**.",
-              f"- Upper gasket web before component relief: **{k['min_gasket_web_before_component_reliefs_mm']:.3f} mm**. Separate lower diode reliefs; both sheets/rib plans remain connected and exclude moving systems.",
-              '- Support outputs are 2D concepts only: lower-relief load paths, clamps/mounts, hard stops, compression and complete case Z geometry remain open.',
+              f"- Diodes lie on their switch islands at (+3.60, 0) mm, rotated 90°; minimum diode copper/edge clearance **{k['min_diode_copper_to_route_mm']:.3f} mm**.",
+              f"- Minimum diode pad to switch solder copper: **{k['min_diode_to_switch_copper_mm']:.3f} mm**; diode courtyard to switch drill: **{k['min_diode_courtyard_to_switch_drill_mm']:.3f} mm**. Hand-soldering access remains a physical check.",
+              f"- Minimum gasket web before interface-bay relief: **{k['min_gasket_web_before_component_reliefs_mm']:.3f} mm**. Upper and lower switch-area gasket outlines match; both sheets/rib plans remain connected and exclude moving systems.",
+              f"- Each upper/lower gasket and rib plan encloses **{k['enclosed_switch_windows_per_support_sheet']} separate switch windows**, including the two keys beside the stepped interface bay.",
+              '- Support outputs are 2D concepts only: clamps/mounts, diode underside clearance, hard stops, compression and complete case Z geometry remain open.',
               '- Unsupported support tongues are deliberately omitted from the 2D plans, with per-piece area guard; this changes clamp coverage and needs mechanical review: '+('; '.join(f"{s['sheet']}: {s['omitted_lobes']} lobes / {s['omitted_area_mm2']:.2f} mm²" for s in k['support_tongues_deliberately_omitted']))+'.',
               '- Board is **unrouted**. No native KiCad ERC/DRC has run. MCU pin thresholds, diode voltage margins, multi-key ghosting, firmware and powered/unpowered protection qualification remain open.',
               '- Actual half, passive adapter and two-tab panel are implemented in native CAD; promotional price is not certified.',
+              '- `choc5x4_panel` is the only PCB definition/output. Half and adapter checks use exact panel footprints with their existing separated-board perimeter outlines; no separate PCB placements are generated.',
               '- **USB-C interface DESIGN HOLD:** selected pin groups preserve identity with adapter compensation in all four modeled orientations; input margins, rollover and protection qualification remain unresolved. See [interface verification](usb-c-interface-verification.md); `npm run check:interface` is a separate failing electrical release gate.', '']
 if panel_result:
     p=panel_result
@@ -300,6 +303,7 @@ if panel_result:
       f"- Actual separated-board gap {p['min_board_separation_mm']:.3f} mm; two five-hole mouse-bite tabs. Simulated removal leaves two connected boards.",
       f"- Adapter {p['adapter']['components']} components including XIAO header carrier; panel {p['panel']['components']} footprints including tabs. Pad clearances, functional drills and courtyards screened on emitted geometry.",
       '- USB4115-03-C is an upright 24-contact connector, 9.3 mm tall. Four shell stakes and two locating holes are included per connector.',
+      '- All pick-and-place SMD parts on the half and adapter are on B.Cu. Switches and the separately fitted XIAO are excluded from bottom-side PCBA; JLCPCB assembly acceptance and centroid/stencil review remain open.',
       '- XIAO mounts on two six-pin headers after depaneling, with D0/5V omitted. Its module body overhangs the carrier and needs at least 3 mm standoff; purchased header fit and case Z geometry remain manual.',
       '- Adapter contains series/contact-isolation resistors and TVS only; no LDO, charge pump, reference or active protection IC. TVS does not guarantee MCU fault protection.',
       '- Mouse-bite perforations intentionally have 0.40 mm hole-edge gaps; the separate ≥0.45 mm functional-hole rule remains unchanged.',

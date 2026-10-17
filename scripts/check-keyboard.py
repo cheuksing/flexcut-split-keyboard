@@ -35,7 +35,7 @@ def verify_keyboard(model, rules):
     require(boundary.is_valid,'invalid exterior outline')
     require(model['thickness']==rules['process']['thickness_mm'],'wrong PCB thickness')
     switches=[f for f in model['footprints'] if f['name']=='keyboard-design:choc']
-    diodes=[f for f in model['footprints'] if f['name']=='keyboard-design:diode_sod123']
+    diodes=[f for f in model['footprints'] if f['name']=='keyboard-design:diode_sod523']
     count=spec['columns']*spec['rows']
     require(len(switches)==len(diodes)==count,'wrong component count')
     require(model['electrical']['directed_pairs']==spec['scan_gpio_per_half']*(spec['scan_gpio_per_half']-1), 'incomplete directed-pair coverage')
@@ -77,15 +77,26 @@ def verify_keyboard(model, rules):
         core=component(necks,sw['at'][:2])
         require(core is not None and not core.equals(stationary),'island collapsed or bypasses beams')
         require(all(core.covers(Point(p['at'])) for p in sw['pads']),'pad/post disconnected through narrow island neck')
-    # A diode's entire assembly courtyard must lie on stationary material,
-    # including after the 1.96 mm erosion/opening separates all moving islands.
+    # Diodes move with their switches, inside the existing moving-system window.
+    # Keep each complete body/courtyard clear of routed cuts and switch holes.
     rigid=stationary.buffer(project['island_neck_width_guard_mm']/2,quad_segs=32)
-    courtyards=[]
-    for diode in diodes:
+    courtyards=[]; diode_switch_copper_gaps=[]; diode_switch_drill_gaps=[]
+    for diode,sw in zip(diodes,switches):
         require(len(diode['courtyard'])==1,'diode courtyard absent')
         a,b=diode['courtyard'][0]; courtyard=box(*a,*b)
-        require(rigid.covers(courtyard),'diode touches moving island / flex beam')
+        island=component(necks,sw['at'][:2])
+        require(island is not None and island.buffer(project['island_neck_width_guard_mm']/2,quad_segs=32).covers(courtyard),
+                'diode is outside its switch island')
         require(courtyard.distance(cuts)>=project['component_courtyard_to_route_min_mm'],'diode assembly courtyard too near cut')
+        for pad in sw['pads']:
+            if pad.get('drill'):
+                diode_switch_drill_gaps.append(courtyard.distance(capsule(pad['at'],pad['drill'])))
+                require(courtyard.distance(capsule(pad['at'],pad['drill']))>=project['component_courtyard_to_route_min_mm'],
+                        'diode courtyard too near switch drill')
+            if pad['type']!='np_thru_hole':
+                diode_switch_copper_gaps.extend(padshape(p).distance(padshape(pad)) for p in diode['pads'])
+                require(courtyard.distance(padshape(pad))>=project['component_courtyard_to_route_min_mm'],
+                        'diode courtyard too near switch copper')
         courtyards.append(courtyard)
     interface=[f for f in model['footprints'] if f not in switches and f not in diodes]
     for f in interface:
@@ -123,6 +134,9 @@ def verify_keyboard(model, rules):
         require(all(envelope.covers(padshape(p)) for p in sw['pads']),'support window omits moving pad/hole')
         envelopes.append(envelope)
     windows=[p.buffer(project['gasket_edge_clearance_mm'],quad_segs=32) for p in envelopes]
+    require(all(window.covers(courtyard.buffer(project['component_relief_clearance_mm']))
+                for window,courtyard in zip(windows,courtyards)),
+            'diode needs relief outside its existing gasket window')
     top=boundary.difference(unary_union(windows))
     web=min(a.distance(b) for i,a in enumerate(windows) for b in windows[i+1:])
     require(web>=project['gasket_unrelieved_web_min_mm'],'unrelieved gasket web too narrow')
@@ -133,12 +147,14 @@ def verify_keyboard(model, rules):
     interface_courtyards=[box(*a,*b) for f in interface for a,b in f['courtyard']]
     upper_bay=None
     if interface_courtyards:
-        bay=unary_union(interface_courtyards).buffer(project['component_relief_clearance_mm'])
-        _,_,right,bottom_y=bay.bounds
-        upper_bay=box(boundary.bounds[0]-1,boundary.bounds[1]-1,right,bottom_y)
+        # Follow the component groups with a stepped, edge-open bay. A single
+        # bounding rectangle consumes the support above SW4 and beside SW8.
+        relieved=[c.buffer(project['component_relief_clearance_mm']) for c in interface_courtyards]
+        upper_bay=unary_union([box(boundary.bounds[0]-1,boundary.bounds[1]-1,c.bounds[2],c.bounds[3])
+                              for c in relieved])
+        require(upper_bay.covers(unary_union(relieved)),'interface bay omits component relief')
         top=top.difference(upper_bay)
-    relief=unary_union(courtyards).buffer(project['component_relief_clearance_mm'],quad_segs=32)
-    bottom=top.difference(relief)
+    bottom=top
     # Deliberately cut away unsupported tongues in these gasket/rib concepts.
     # Keep the perimeter-connected frame and report each omitted lobe. Reject
     # large pieces, so a disconnected frame cannot be hidden by trimming.
@@ -164,12 +180,17 @@ def verify_keyboard(model, rules):
     ribbase=boundary.difference(ribwindows)
     if upper_bay is not None:ribbase=ribbase.difference(upper_bay)
     upper_ribs=trim_tongues(ribbase,'upper_ribs')
-    lower_ribs=trim_tongues(ribbase.difference(relief),'lower_ribs')
+    lower_ribs=trim_tongues(ribbase,'lower_ribs')
     require(upper_ribs.geom_type==lower_ribs.geom_type=='Polygon','rib plan disconnected')
     require(top.intersection(unary_union(envelopes)).area<1e-8,'upper gasket touches moving system')
     require(bottom.intersection(unary_union(envelopes)).area<1e-8,'lower gasket touches moving system')
-    require(bottom.intersection(relief).area<1e-6,'lower gasket obstructs diode relief')
+    require(bottom.equals(top),'upper and lower gasket support differ around switches')
     geometry={'upper_gasket':top,'lower_gasket':bottom,'upper_ribs':upper_ribs,'lower_ribs':lower_ribs}
+    for name,g in geometry.items():
+        require(len(g.interiors)==count,name+' does not fully surround every switch')
+        holes=[Polygon(r) for r in g.interiors]
+        require(all(any(h.covers(Point(sw['at'][:2])) for h in holes) for sw in switches),
+                name+' opens a switch window into the interface bay or perimeter')
     bounds=boundary.bounds
     result={
         'keys':count,'scan_gpio':spec['scan_gpio_per_half'],'directed_pairs':model['electrical']['directed_pairs'],
@@ -179,12 +200,15 @@ def verify_keyboard(model, rules):
         'min_cut_to_outline_land_mm':outline_land,
         'cut_to_outline_adverse_stack_mm':outline_land-2*tol,
         'min_diode_copper_to_route_mm':min(diode_clearances),
+        'min_diode_to_switch_copper_mm':min(diode_switch_copper_gaps),
+        'min_diode_courtyard_to_switch_drill_mm':min(diode_switch_drill_gaps),
         'min_gasket_web_before_component_reliefs_mm':web,
         'min_hole_to_hole_mm':hole_gap,
         'drilled_half_connected':True,'adverse_half_connected':True,
         'two_beams_per_key_screen':True,'island_necks_screen':True,
-        'diodes_on_stationary_grid':True,'support_sheets_connected':True,
+        'diodes_on_moving_islands':True,'support_sheets_connected':True,
         'interface_on_stationary_grid':True,
+        'enclosed_switch_windows_per_support_sheet':count,
         'interface_case_bay_bounds':list(upper_bay.bounds) if upper_bay is not None else None,
         'support_tongues_deliberately_omitted':trimmed,
         'schematic_matches_pcb':True,'unrouted':True,

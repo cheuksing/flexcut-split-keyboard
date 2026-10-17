@@ -25,20 +25,31 @@ function boardModel(text) {
   const tree = parse(text);
   const footprints = children(tree, 'footprint').map(fp => {
     const at = numbers(fp, 'at');
-    assert(Math.abs(at[2] || 0) < 1e-8, 'Half must use fixed zero-degree footprints');
-    const abs = p => [p[0] + at[0], p[1] + at[1]];
+    const rotation=at[2]||0, angle=-rotation*Math.PI/180;
+    assert(Math.abs(rotation)<1e-8 ||
+      (fp[1]==='keyboard-design:diode_sod523' && Math.abs(rotation-90)<1e-8),
+      'Only matrix diodes may rotate 90 degrees; other footprints must stay at zero');
+    const abs = p => [at[0]+p[0]*Math.cos(angle)-p[1]*Math.sin(angle),
+      at[1]+p[0]*Math.sin(angle)+p[1]*Math.cos(angle)];
     return {
       name: fp[1], ref: children(fp, 'fp_text').find(t => t[1] === 'reference')[2], at,
       side:child(fp,'layer')[1][0], value:children(fp,'fp_text').find(t=>t[1]==='value')?.[2]||'',
       cuts: loops(primitives(fp)).map(c => c.map(abs)),
       pads: children(fp, 'pad').map(p => ({
         number: p[1], type: p[2], shape: p[3], at: abs(numbers(p, 'at')),
-        size: numbers(p, 'size'), layers: child(p, 'layers').slice(1),
+        // KiCad pad angles are absolute; positions are footprint-local.
+        size: Math.abs((numbers(p,'at')[2]||0)%180)===90
+          ? numbers(p,'size').toReversed() : numbers(p,'size'),
+        layers: child(p, 'layers').slice(1),
         drill: child(p, 'drill')?.slice(1).filter(v => v !== 'oval').map(Number),
         net: child(p, 'net')?.[2] || null,
       })),
       courtyard: children(fp, 'fp_rect').filter(r => ['B.CrtYd','F.CrtYd'].includes(child(r, 'layer')[1]))
-        .map(r => [abs(numbers(r, 'start')), abs(numbers(r, 'end'))]),
+        .map(r => {
+          const a=abs(numbers(r,'start')),b=abs(numbers(r,'end'));
+          return [[Math.min(a[0],b[0]),Math.min(a[1],b[1])],
+            [Math.max(a[0],b[0]),Math.max(a[1],b[1])]];
+        }),
     };
   });
   const edges = tree.filter(e => ['gr_line', 'gr_arc'].includes(e[0]) && child(e, 'layer')[1] === 'Edge.Cuts')
@@ -105,9 +116,10 @@ function verifyElectrical(model, keys, sch) {
     scan.add(key.sense); scan.add(key.sink);
     const sw = fp.get(key.switch), diode = fp.get(key.diode);
     assert.equal(sw.name, 'keyboard-design:choc');
-    assert.equal(diode.name, 'keyboard-design:diode_sod123');
+    assert.equal(diode.name, 'keyboard-design:diode_sod523');
     assert(distance(sw.at, key.at) < 1e-6, 'Switch placement differs from Ergogen');
-    assert(distance(diode.at, [sw.at[0] + 5, sw.at[1] + 19.05/2]) < 1e-6, 'Diode misplaced');
+    assert(distance(diode.at, [sw.at[0]+3.6, sw.at[1]]) < 1e-6, 'Diode misplaced');
+    assert.equal(diode.at[2],90,'Diode rotation must be 90 degrees');
     const net = (f, n) => f.pads.find(p => p.number === n)?.net;
     const expectedSW = { '1': key.sense, '2': key.local };
     const expectedD = { '1': key.sink, '2': key.local };
@@ -126,6 +138,8 @@ function verifyElectrical(model, keys, sch) {
   }
   assert.deepEqual([...scan].sort(), ['P0', 'P1', 'P2', 'P3', 'P4']);
   assert.equal(pairs.size, 5 * (5 - 1), 'Directed-pair coverage incomplete');
+  assert(model.footprints.every(f => f.name === 'keyboard-design:choc' || f.side === 'B'),
+    'All assembled half-board SMDs must occupy B.Cu');
   verifyInterface(model,half,sch);
   return { scan_nets: [...scan].sort(), directed_pairs: pairs.size, schematic_matches_pcb: true };
 }
@@ -135,6 +149,7 @@ function verifyInterface(model,parts,sch) {
     const f=model.footprints.find(f=>f.ref===part.ref);
     assert(f,`Missing interface component ${part.ref}`);
     assert.equal(f.name,'keyboard-design:'+part.kind);
+    assert.equal(f.side,part.kind==='xiao12'?'F':'B',`Assembly side ${part.ref}`);
     assert(distance(f.at,part.at)<1e-5,`Interface placement ${part.ref}`);
     const actual={};for(const p of f.pads) if(p.number) {
       assert(!(p.number in actual),`Repeated interface pad ${part.ref}.${p.number}`);

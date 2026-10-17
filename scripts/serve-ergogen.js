@@ -9,9 +9,9 @@ const MAX_INPUT=256*1024;
 const MIME={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8',
   '.svg':'image/svg+xml','.png':'image/png','.csv':'text/csv; charset=utf-8','.kicad_pcb':'text/plain; charset=utf-8','.kicad_sch':'text/plain; charset=utf-8'};
 const pages=new Map([['/','index.html'],['/app.js','app.js'],['/style.css','style.css']]);
-const checkedFiles=new Set(['index.html','layout.svg','matrix.svg','supports.svg','layout.png','matrix.png','supports.png','panel-fit.svg','panel-fit.png','adapter.svg','adapter.png',
-  'adapter.kicad_pcb','adapter.kicad_sch','choc5x4_panel.kicad_pcb',
-  'choc5x4_half.kicad_pcb','choc5x4_half.kicad_sch','matrix.csv']);
+const checkedFiles=new Set(['index.html','layout.svg','matrix.svg','supports.svg','key-detail.svg','layout.png','matrix.png','supports.png','key-detail.png','panel-fit.svg','panel-fit.png','adapter.svg','adapter.png',
+  'adapter.kicad_sch','choc5x4_panel.kicad_pcb',
+  'choc5x4_half.kicad_sch','matrix.csv']);
 const footprintFiles=new Set(['index.html','ks33.svg','choc.svg','mx.svg','footprints.svg','choc-3x3.svg',
   'SwitchFlex.pretty/ks33.kicad_mod','SwitchFlex.pretty/choc.kicad_mod','SwitchFlex.pretty/mx.kicad_mod']);
 function fail(status,message) {return Object.assign(new Error(message),{status});}
@@ -61,7 +61,7 @@ function createServer() {
       if(req.method==='GET' && url.pathname==='/api/project') {
         const config=await fs.readFile(path.join(root,'ergogen/config.yaml'),'utf8');
         return send(200,{config,filename:'ergogen/config.yaml',version:require('ergogen').version,
-          footprints:['choc','diode_sod123','ks33','mx'],thicknessMm:1.2});
+          footprints:['choc','diode_sod523','ks33','mx'],thicknessMm:1.2});
       }
       if(url.pathname==='/api/generate') {
         if(req.method!=='POST') {res.setHeader('Allow','POST');throw fail(405,'Use POST to generate a preview.');}
@@ -90,7 +90,7 @@ function createServer() {
         const name=url.pathname.slice('/review/'.length);
         if(footprintFiles.has(name)) filename=path.join(root,'build/review',name);
       }
-      if(/^\/ergogen\/footprints\/(choc|diode_sod123|ks33|mx)\.js$/.test(url.pathname)) {
+      if(/^\/ergogen\/footprints\/(choc|diode_sod523|ks33|mx)\.js$/.test(url.pathname)) {
         filename=path.join(root,url.pathname.slice(1));
         res.setHeader('Content-Disposition','attachment');
       }
