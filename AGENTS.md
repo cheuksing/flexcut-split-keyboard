@@ -18,5 +18,11 @@
   change. Keep intentional flex beams distinct from rigid island necks and grid.
 - Preserve bottom-only solder copper, plated electrical/support holes, unplated
   plastic-post holes, and the V2 mechanical support's empty pad number/no net.
+- Treat accidental USB plug-in without damage as a release requirement for both
+  adapter split sockets and either keyboard half. The [split-port safety
+  requirements](docs/keyboard.md#split-port-safety) define the goal and the
+  evidence required. Run `npm run check:interface` after interface changes.
+  Keep the hold open until bench qualification is documented. Use a
+  current-limited fixture for initial fault testing.
 - Scope remains footprint/design review; do not publish, order, or send messages
   to a manufacturer without the user's instruction.

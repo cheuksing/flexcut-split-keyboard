@@ -123,6 +123,53 @@ islands and connector eligibility still need assembly review once routing is
 complete. The 9.3 mm USB-C bodies now project below the PCB, so the lower case
 needs matching port access and depth.
 
+## Split-port safety
+
+**Design goal.** One central XIAO scans two identical passive halves through
+compact, externally accessible USB-C split ports and replaceable cables. The
+current pinout is designed for passive, full-featured USB-C cables. The XIAO's
+own USB-C socket supplies power and connects to the computer.
+
+**Release requirement.** Accidentally plugging a regular USB host or charger into
+either adapter split socket or the socket on either half must cause no damage
+to the host, charger, adapter, controller, or half. Both sides must still work
+normally afterward. Electrical isolation is optional. Evaluate accidental
+connections with the adapter powered and unpowered, including when its normal
+USB cable is attached.
+
+**Why the current design is on hold.** The split ports leave USB power,
+connection detection, and USB 2.0 data contacts unwired. The five scan signals
+still reach SuperSpeed and sideband contacts through resistors, and the cable
+shield can provide a ground path. On an adapter port, a powered GPIO can put
+voltage on a host contact. An external source can also feed current through a
+GPIO into the unpowered XIAO. On a passive half, paired contacts are connected
+through 2 kΩ even with all keys released, and held keys provide additional
+paths. The resistors limit current and the TVS diodes suppress spikes. The report
+records the calculated paths and the limits of those protections.
+[Electrical verification](usb-c-interface-verification.md#accidental-plug-in-electrical-review) ·
+[Constraint register, K28–K30](manufacturing-limitations.md).
+
+**How to qualify the ports.**
+
+1. Run `npm run check:interface` to verify the schematic and PCB pin assignments
+   and resistor paths. Record which host or charger types, cables, and part
+   limits the safety claim covers.
+2. Use a current-limited fixture for initial testing on a routed prototype.
+   Cover both adapter ports and the half, both adapter power states, all four
+   plug orientations for C-to-C cables, plug-in and unplugging, and keys
+   released and held where applicable. Measure contact voltages and currents,
+   shield current, and the XIAO's 3.3 V rail while off to check for backfeed.
+3. Compare the measurements, including transients, with the applicable
+   component limits before connecting a representative host or charger.
+   Confirm both sides still operate normally after each qualified fault case.
+   Document the hardware revision, setup, results, and any remaining gaps.
+   Link that record from K28 before clearing the hold.
+
+**Current status.** CAD checks and nominal current calculations are complete.
+A routed prototype and physical misplug results are still pending. Keep every
+split socket on release hold and use a fixture in place of a PC for initial
+testing.
+
 ## Flex, diodes and support
 
 All switches retain the generated Choc V1/V2 cuts, holes and copper. The V1

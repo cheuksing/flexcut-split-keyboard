@@ -18,6 +18,12 @@ plug orientations. Scan margins, rollover and powered/unpowered fault safety
 remain on [electrical hold](docs/usb-c-interface-verification.md).
 Native KiCad ERC/DRC and complete case construction remain open.
 
+**Split-port safety requirement.** Accidentally connecting a USB host or charger
+to either adapter split socket or either keyboard half must damage neither
+side. The XIAO's own USB-C socket is the intended computer connection. All
+split sockets remain on release hold pending hardware qualification.
+[Design goal and qualification criteria](docs/keyboard.md#split-port-safety).
+
 ## Build and review
 
 To use the local Ergogen web interface after `npm ci`:
